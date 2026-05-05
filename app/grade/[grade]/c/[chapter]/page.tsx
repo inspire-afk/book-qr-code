@@ -1,0 +1,38 @@
+import { notFound } from "next/navigation";
+import prisma from "@/lib/prisma";
+import { ChapterContent } from "./ChapterContent";
+
+export default async function ChapterPage({
+  params,
+}: {
+  params: Promise<{ grade: string; chapter: string }>;
+}) {
+  const { grade: gradeParam, chapter: chapterParam } = await params;
+  const gradeInt = parseInt(gradeParam);
+  const chapterNo = parseInt(chapterParam);
+
+  const chapter = await prisma.chapter.findFirst({
+    where: {
+      grade: { grade: gradeInt },
+      chapterNo: chapterNo,
+    },
+    include: {
+      quiz: {
+        include: {
+          questions: true,
+        },
+      },
+      grade: true,
+    },
+  });
+
+  if (!chapter) {
+    return notFound();
+  }
+
+  return (
+    <ChapterContent 
+      chapter={chapter} 
+    />
+  );
+}
