@@ -1,8 +1,11 @@
-import QRCode from "qrcode";
+import QRCode from "qrcode"
 
 export const generateQRCode = async (path: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  const url = `${baseUrl}${path}`;
+  const baseUrl =
+    process.env.NODE_ENV === "production"
+      ? "https://hunarho-book.vercel.app"
+      : "http://localhost:3000"
+  const url = `${baseUrl}${path}`
   try {
     const qrDataUrl = await QRCode.toDataURL(url, {
       width: 1000,
@@ -11,11 +14,11 @@ export const generateQRCode = async (path: string) => {
         dark: "#000000",
         light: "#ffffff",
       },
-      errorCorrectionLevel: 'H'
-    });
-    return qrDataUrl;
+      errorCorrectionLevel: "H",
+    })
+    return qrDataUrl
   } catch (err) {
-    console.error("QR Code generation error:", err);
-    return "";
+    console.error("QR Code generation error:", err)
+    return ""
   }
-};
+}
