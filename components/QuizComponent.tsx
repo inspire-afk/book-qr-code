@@ -80,7 +80,7 @@ export const QuizComponent = ({ quiz, onComplete, onCancel }: QuizComponentProps
   return (
     <div className="glass-card flex flex-col min-h-[600px] shadow-2xl shadow-indigo-500/10">
       {/* Quiz Header */}
-      <div className="p-8 border-b border-white/5 flex items-center justify-between bg-black/20">
+      <div className="p-8 border-b border-indigo-100 flex items-center justify-between bg-indigo-50/50">
         <div className="flex items-center gap-4">
           <div className="bg-indigo-600/20 p-3 rounded-2xl border border-indigo-500/30">
             <HelpCircle className="h-6 w-6 text-indigo-400" />
@@ -89,21 +89,21 @@ export const QuizComponent = ({ quiz, onComplete, onCancel }: QuizComponentProps
             <h3 className="font-bold text-xl">{quiz.title}</h3>
             <div className="flex items-center gap-2 mt-1">
                <span className="text-xs uppercase tracking-widest font-bold text-indigo-400">Step {currentIdx + 1}</span>
-               <span className="h-1 w-1 rounded-full bg-white/20" />
-               <span className="text-sm text-white/40">of {quiz.totalQuestions} questions</span>
+               <span className="h-1 w-1 rounded-full bg-indigo-200" />
+               <span className="text-sm text-muted-foreground">of {quiz.totalQuestions} questions</span>
             </div>
           </div>
         </div>
         <button
           onClick={onCancel}
-          className="text-sm font-bold text-white/30 hover:text-white transition-colors px-4 py-2 rounded-xl hover:bg-white/5"
+          className="text-sm font-bold text-muted-foreground/60 hover:text-indigo-600 transition-colors px-4 py-2 rounded-xl hover:bg-indigo-50"
         >
           Quit Quiz
         </button>
       </div>
 
       {/* Progress Bar */}
-      <div className="h-1.5 w-full bg-white/5 overflow-hidden">
+      <div className="h-1.5 w-full bg-indigo-50 overflow-hidden">
         <motion.div
           className="h-full bg-indigo-600 shadow-[0_0_15px_rgba(79,70,229,0.8)]"
           initial={{ width: 0 }}
@@ -137,17 +137,17 @@ export const QuizComponent = ({ quiz, onComplete, onCancel }: QuizComponentProps
                         ? (option.isCorrect || option.label === currentQuestion.correctAnswer)
                           ? "bg-green-500/20 border-green-500/50 shadow-lg shadow-green-500/10"
                           : "bg-red-500/20 border-red-500/50 shadow-lg shadow-red-500/10"
-                        : "bg-indigo-600 border-indigo-400 shadow-xl shadow-indigo-500/20 scale-[1.02]"
+                        : "bg-indigo-600 border-indigo-400 text-white shadow-xl shadow-indigo-500/20 scale-[1.02]"
                       : showRationale && (option.isCorrect || option.label === currentQuestion.correctAnswer)
                         ? "bg-green-500/10 border-green-500/30"
-                        : "bg-white/5 border-white/5 hover:border-white/20 hover:bg-white/10"
+                        : "bg-secondary/50 border-border hover:border-indigo-200 hover:bg-indigo-50/50"
                   }`}
                 >
                   <div className="flex items-center gap-5">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg transition-all ${
                       selectedOption === option.label 
                         ? "bg-white text-indigo-600 shadow-lg" 
-                        : "bg-white/10 text-white/40 group-hover:bg-white/20"
+                        : "bg-indigo-100 text-indigo-600 group-hover:bg-indigo-200"
                     }`}>
                       {option.label}
                     </div>
@@ -186,7 +186,7 @@ export const QuizComponent = ({ quiz, onComplete, onCancel }: QuizComponentProps
                 <div className={`font-bold uppercase tracking-widest text-xs ${isCorrect ? "text-green-400" : "text-red-400"}`}>
                   {isCorrect ? "Correct Explanation" : "Wait, Why?"}
                 </div>
-                <p className="text-white/80 leading-relaxed italic">
+                <p className="text-foreground/80 leading-relaxed italic">
                   {selectedOptionData?.rationale || (options.find(o => o.isCorrect || o.label === currentQuestion.correctAnswer)?.rationale)}
                 </p>
               </div>
@@ -196,7 +196,7 @@ export const QuizComponent = ({ quiz, onComplete, onCancel }: QuizComponentProps
       </div>
 
       {/* Footer */}
-      <div className="p-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6 bg-black/20">
+      <div className="p-8 border-t border-indigo-100 flex flex-col sm:flex-row items-center justify-between gap-6 bg-indigo-50/50">
         <div>
           {currentQuestion.hint && !showRationale && (
             <button
@@ -213,7 +213,7 @@ export const QuizComponent = ({ quiz, onComplete, onCancel }: QuizComponentProps
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="text-sm text-white/50 mt-3 italic max-w-md pl-4 border-l-2 border-indigo-500/50"
+                className="text-sm text-muted-foreground mt-3 italic max-w-md pl-4 border-l-2 border-indigo-500/50"
               >
                 {currentQuestion.hint}
               </motion.p>
@@ -226,8 +226,8 @@ export const QuizComponent = ({ quiz, onComplete, onCancel }: QuizComponentProps
           onClick={handleNext}
           className={`flex items-center gap-2 px-12 py-4 rounded-2xl font-bold transition-all w-full sm:w-auto justify-center group ${
             selectedOption
-              ? "bg-indigo-600 hover:bg-indigo-500 shadow-xl shadow-indigo-500/30"
-              : "bg-white/10 text-white/30 cursor-not-allowed"
+              ? "bg-indigo-600 text-white hover:bg-indigo-500 shadow-xl shadow-indigo-500/30"
+              : "bg-secondary text-muted-foreground/30 cursor-not-allowed"
           }`}
         >
           {!showRationale ? "Check Answer" : (currentIdx === quiz.questions.length - 1 ? "Finish Quiz" : "Next Question")}

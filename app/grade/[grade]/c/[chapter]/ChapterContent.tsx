@@ -53,7 +53,7 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
     <div className="container mx-auto max-w-6xl px-4 py-8">
       {/* Header */}
       <div className="mb-8 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <Link
             href={`/grade/${chapter.grade.grade}`}
             className="flex items-center gap-1 text-sm font-medium text-indigo-400 transition-colors hover:text-indigo-300"
@@ -63,13 +63,13 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
           <h1 className="gradient-text text-3xl font-bold md:text-5xl">
             {chapter.chapterNo}. {chapter.title}
           </h1>
-        </div>
+        </div> */}
 
         {/* Progress Tracker */}
-        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-1.5 backdrop-blur-md">
+        <div className="flex items-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-1.5 backdrop-blur-md">
           <button
             onClick={() => setActiveStep("content")}
-            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 transition-all ${activeStep === "content" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "text-white/40 hover:text-white/60"}`}
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 transition-all ${activeStep === "content" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "text-muted-foreground hover:bg-white/50 hover:text-indigo-600"}`}
           >
             <PlayCircle className="h-4 w-4" />
             <span className="text-sm font-medium">Content</span>
@@ -77,7 +77,7 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
           <button
             disabled={!contentCompleted}
             onClick={() => setActiveStep("quiz")}
-            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 transition-all ${activeStep === "quiz" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : contentCompleted ? "text-white/40 hover:text-white/60" : "cursor-not-allowed text-white/10"}`}
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 transition-all ${activeStep === "quiz" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : contentCompleted ? "text-muted-foreground hover:bg-white/50 hover:text-indigo-600" : "cursor-not-allowed text-muted-foreground/20"}`}
           >
             {contentCompleted ? (
               <FileText className="h-4 w-4" />
@@ -89,7 +89,7 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
           <button
             disabled={!isAlreadyDone && activeStep !== "result"}
             onClick={() => isAlreadyDone && setActiveStep("result")}
-            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 transition-all ${activeStep === "result" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : isAlreadyDone ? "text-white/40 hover:text-white/60" : "cursor-not-allowed text-white/10"}`}
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 transition-all ${activeStep === "result" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : isAlreadyDone ? "text-muted-foreground hover:bg-white/50 hover:text-indigo-600" : "cursor-not-allowed text-muted-foreground/20"}`}
           >
             <Trophy className="h-4 w-4" />
             <span className="text-sm font-medium">Result</span>
@@ -130,8 +130,8 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
                   onClick={() => setActiveStep("quiz")}
                   className={`flex items-center gap-2 rounded-2xl px-10 py-4 font-bold transition-all ${
                     contentCompleted
-                      ? "bg-indigo-600 shadow-xl shadow-indigo-500/30 hover:bg-indigo-500"
-                      : "cursor-not-allowed bg-white/10 text-white/30"
+                      ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/30 hover:bg-indigo-500"
+                      : "cursor-not-allowed bg-secondary text-muted-foreground/30"
                   }`}
                 >
                   Unlock Quiz
@@ -187,15 +187,15 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
                   <div className="text-5xl font-bold text-indigo-400">
                     {score ?? 0}%
                   </div>
-                  <div className="text-sm font-semibold tracking-widest text-white/40 uppercase">
+                  <div className="text-sm font-semibold tracking-widest text-muted-foreground uppercase">
                     Your Score
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <div className="text-5xl font-bold text-white/80">
+                  <div className="text-5xl font-bold text-foreground">
                     {chapter.quiz.totalQuestions}
                   </div>
-                  <div className="text-sm font-semibold tracking-widest text-white/40 uppercase">
+                  <div className="text-sm font-semibold tracking-widest text-muted-foreground uppercase">
                     Total Questions
                   </div>
                 </div>
@@ -204,7 +204,7 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
               <div className="flex justify-center gap-6 pt-6">
                 <button
                   onClick={() => setActiveStep("content")}
-                  className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-8 py-4 font-bold transition-all hover:bg-white/10"
+                  className="flex items-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50 px-8 py-4 font-bold transition-all hover:bg-indigo-100"
                 >
                   <RotateCcw className="h-5 w-5" />
                   Review Lesson
