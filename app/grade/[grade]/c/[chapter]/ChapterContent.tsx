@@ -1,16 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   PlayCircle,
   FileText,
   CheckCircle2,
-  Lock,
-  Trophy,
   ArrowRight,
   RotateCcw,
+  Play,
 } from "lucide-react"
 import { MediaViewer } from "@/components/MediaViewer"
 import { QuizComponent } from "@/components/QuizComponent"
@@ -21,119 +19,179 @@ interface ChapterContentProps {
 }
 
 export const ChapterContent = ({ chapter }: ChapterContentProps) => {
-  const [activeStep, setActiveStep] = useState<"content" | "quiz" | "result">(
-    "content"
-  )
-  const [contentCompleted, setContentCompleted] = useState(false)
-  const { completeChapter, isChapterCompleted, setQuizScore, quizScores } =
+  const [currentModuleIndex, setCurrentModuleIndex] = useState(0)
+  const [activeStep, setActiveStep] = useState<
+    "video" | "quiz" | "stem" | "result"
+  >("video")
+  const [videoCompleted, setVideoCompleted] = useState(false)
+
+  const { completeChapter, isChapterCompleted, setQuizScore } =
     useProgressStore()
 
   const isAlreadyDone = isChapterCompleted(chapter.id)
-  const score = quizScores[chapter.id]
+  const currentModule = chapter.modules[currentModuleIndex]
+  const isLastModule = currentModuleIndex === chapter.modules.length - 1
 
   useEffect(() => {
+    // Reset video completion when moving to a new module or step
+    setVideoCompleted(false)
+
     if (isAlreadyDone) {
-      setContentCompleted(true)
-    } else {
-      // Simulate content consumption
+      setVideoCompleted(true)
+    } else if (activeStep === "video" || activeStep === "stem") {
       const timer = setTimeout(() => {
-        setContentCompleted(true)
+        setVideoCompleted(true)
       }, 3000)
       return () => clearTimeout(timer)
     }
-  }, [isAlreadyDone, chapter.id])
+  }, [currentModuleIndex, activeStep, isAlreadyDone])
 
   const handleQuizComplete = (finalScore: number) => {
-    setQuizScore(chapter.id, finalScore)
+    // We could store per-module scores if needed, but for now we'll just track completion
+    if (isLastModule) {
+      if (chapter.stemVideoUrl) {
+        setActiveStep("stem")
+      } else {
+        setQuizScore(chapter.id, finalScore)
+        completeChapter(chapter.id)
+        setActiveStep("result")
+      }
+    } else {
+      setCurrentModuleIndex((prev) => prev + 1)
+      setActiveStep("video")
+    }
+  }
+
+  const handleStemComplete = () => {
     completeChapter(chapter.id)
     setActiveStep("result")
   }
 
   return (
     <div className="container mx-auto max-w-6xl px-3 py-4 md:px-4 md:py-8">
-      {/* Header */}
-      <div className="mb-8 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-        {/* <div className="space-y-2">
-          <Link
-            href={`/grade/${chapter.grade.grade}`}
-            className="flex items-center gap-1 text-sm font-medium text-indigo-400 transition-colors hover:text-indigo-300"
-          >
-            ← Grade {chapter.grade.grade}
-          </Link>
-          <h1 className="gradient-text text-3xl font-bold md:text-5xl">
-            {chapter.chapterNo}. {chapter.title}
-          </h1>
-        </div> */}
+      {/* Progress Header */}
+      <div className="mb-8 flex flex-col items-center justify-between gap-6 md:flex-row">
+        <div className="space-y-1 text-center md:text-left">
+          <h2 className="text-sm font-bold tracking-widest text-indigo-600 uppercase">
+            Chapter {chapter.chapterNo}
+          </h2>
+          <h1 className="text-2xl font-black md:text-4xl">{chapter.title}</h1>
+        </div>
 
-        {/* Progress Tracker */}
-        <div className="no-scrollbar flex items-center gap-1 overflow-x-auto rounded-2xl border border-indigo-100 bg-indigo-50/50 p-1 backdrop-blur-md md:gap-2 md:p-1.5">
-          <button
-            onClick={() => setActiveStep("content")}
-            className={`flex items-center gap-2 rounded-xl px-3 py-2 whitespace-nowrap transition-all md:px-5 md:py-2.5 ${activeStep === "content" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "text-muted-foreground hover:bg-white/50 hover:text-indigo-600"}`}
-          >
-            <PlayCircle className="h-4 w-4" />
-            <span className="text-xs font-medium md:text-sm">Content</span>
-          </button>
-          <button
-            disabled={!contentCompleted}
-            onClick={() => setActiveStep("quiz")}
-            className={`flex items-center gap-2 rounded-xl px-3 py-2 whitespace-nowrap transition-all md:px-5 md:py-2.5 ${activeStep === "quiz" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : contentCompleted ? "text-muted-foreground hover:bg-white/50 hover:text-indigo-600" : "cursor-not-allowed text-muted-foreground/20"}`}
-          >
-            {contentCompleted ? (
-              <FileText className="h-4 w-4" />
-            ) : (
-              <Lock className="h-4 w-4" />
-            )}
-            <span className="text-xs font-medium md:text-sm">Quiz</span>
-          </button>
-          <button
-            disabled={!isAlreadyDone && activeStep !== "result"}
-            onClick={() => isAlreadyDone && setActiveStep("result")}
-            className={`flex items-center gap-2 rounded-xl px-3 py-2 whitespace-nowrap transition-all md:px-5 md:py-2.5 ${activeStep === "result" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : isAlreadyDone ? "text-muted-foreground hover:bg-white/50 hover:text-indigo-600" : "cursor-not-allowed text-muted-foreground/20"}`}
-          >
-            <Trophy className="h-4 w-4" />
-            <span className="text-xs font-medium md:text-sm">Result</span>
-          </button>
+        <div className="flex flex-wrap justify-center gap-2 rounded-3xl border border-indigo-100 bg-indigo-50/50 p-2 backdrop-blur-md">
+          {chapter.modules.map((m: any, i: number) => (
+            <div key={m.id} className="flex items-center gap-2">
+              <button
+                disabled={i > currentModuleIndex && !isAlreadyDone}
+                onClick={() => {
+                  setCurrentModuleIndex(i)
+                  setActiveStep("video")
+                }}
+                className={`flex h-10 w-10 items-center justify-center rounded-full transition-all md:h-12 md:w-12 ${
+                  i === currentModuleIndex
+                    ? "bg-indigo-600 text-white shadow-lg"
+                    : i < currentModuleIndex || isAlreadyDone
+                      ? "bg-green-500 text-white"
+                      : "bg-white text-muted-foreground opacity-50"
+                }`}
+              >
+                {i < currentModuleIndex || isAlreadyDone ? (
+                  <CheckCircle2 className="h-5 w-5" />
+                ) : (
+                  <span className="text-sm font-bold">{i + 1}</span>
+                )}
+              </button>
+            </div>
+          ))}
+          {chapter.stemVideoUrl && (
+            <button
+              disabled={
+                !isAlreadyDone &&
+                (currentModuleIndex < chapter.modules.length - 1 ||
+                  activeStep !== "stem")
+              }
+              onClick={() => setActiveStep("stem")}
+              className={`flex h-10 w-10 items-center justify-center rounded-full transition-all md:h-12 md:w-12 ${
+                activeStep === "stem"
+                  ? "bg-indigo-600 text-white shadow-lg"
+                  : isAlreadyDone
+                    ? "bg-green-500 text-white"
+                    : "bg-white text-muted-foreground opacity-50"
+              }`}
+            >
+              <Play className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-4">
         <AnimatePresence mode="wait">
-          {activeStep === "content" && (
+          {(activeStep === "video" || activeStep === "stem") && (
             <motion.div
-              key="content"
+              key={
+                activeStep === "video" ? `video-${currentModuleIndex}` : "stem"
+              }
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               className="space-y-6"
             >
+              <div className="space-y-2">
+                <h3 className="flex items-center gap-2 text-xl font-bold md:text-2xl">
+                  {activeStep === "video" ? (
+                    <>
+                      <PlayCircle className="h-6 w-6 text-indigo-600" />
+                      {currentModule.title ||
+                        `Module ${currentModuleIndex + 1}`}
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-6 w-6 text-red-600" />
+                      STEM DIY Project
+                    </>
+                  )}
+                </h3>
+              </div>
+
               <MediaViewer
-                videoUrl={chapter.videoUrl}
+                videoUrl={
+                  activeStep === "video"
+                    ? currentModule.videoUrl
+                    : chapter.stemVideoUrl
+                }
                 pdfUrl={chapter.pdfUrl}
               />
-              <div className="glass-card group relative h-auto w-full overflow-hidden shadow-2xl"></div>
 
-              <div className="glass-card flex flex-col items-center justify-between gap-6 border-indigo-500/10 bg-indigo-600/5 p-6 md:flex-row md:gap-0 md:p-8">
+              <div className="glass-card flex flex-col items-center justify-between gap-6 border-indigo-500/10 bg-indigo-600/5 p-6 md:flex-row md:p-8">
                 <div className="space-y-1 text-center md:text-left">
                   <h3 className="text-lg font-bold md:text-xl">
-                    Ready to test your knowledge?
+                    {activeStep === "video"
+                      ? "Ready for the module quiz?"
+                      : "Finished the STEM project?"}
                   </h3>
                   <p className="text-sm text-muted-foreground md:text-base">
-                    {contentCompleted
-                      ? "The quiz is now unlocked! Good luck."
-                      : "Please go through the learning material to unlock the quiz."}
+                    {videoCompleted
+                      ? "Great! You can now move to the next step."
+                      : "Please watch the video to unlock the next step."}
                   </p>
                 </div>
                 <button
-                  disabled={!contentCompleted}
-                  onClick={() => setActiveStep("quiz")}
+                  disabled={!videoCompleted}
+                  onClick={() =>
+                    activeStep === "video"
+                      ? setActiveStep("quiz")
+                      : handleStemComplete()
+                  }
                   className={`flex w-full items-center justify-center gap-2 rounded-2xl px-8 py-3 font-bold transition-all md:w-auto md:px-10 md:py-4 ${
-                    contentCompleted
+                    videoCompleted
                       ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/30 hover:bg-indigo-500"
                       : "cursor-not-allowed bg-secondary text-muted-foreground/30"
                   }`}
                 >
-                  Unlock Quiz
+                  {activeStep === "video"
+                    ? "Take Module Quiz"
+                    : "Finish Chapter"}
                   <ArrowRight className="h-5 w-5" />
                 </button>
               </div>
@@ -142,15 +200,28 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
 
           {activeStep === "quiz" && (
             <motion.div
-              key="quiz"
+              key={`quiz-${currentModuleIndex}`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">
+                    Module {currentModuleIndex + 1} Quiz
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {currentModule.quiz.title}
+                  </p>
+                </div>
+              </div>
               <QuizComponent
-                quiz={chapter.quiz}
+                quiz={currentModule.quiz}
                 onComplete={handleQuizComplete}
-                onCancel={() => setActiveStep("content")}
+                onCancel={() => setActiveStep("video")}
               />
             </motion.div>
           )}
@@ -162,7 +233,7 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
               animate={{ opacity: 1, scale: 1 }}
               className="glass-card space-y-6 p-8 text-center md:space-y-10 md:p-16"
             >
-              <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-green-500/20 bg-green-500/10 md:h-32 md:w-32">
+              {/* <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-green-500/20 bg-green-500/10 md:h-32 md:w-32">
                 <Trophy className="h-12 w-12 text-green-400 md:h-16 md:w-16" />
                 <motion.div
                   initial={{ scale: 0 }}
@@ -172,73 +243,39 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
                 >
                   <CheckCircle2 className="h-4 w-4 md:h-6 md:w-6" />
                 </motion.div>
-              </div>
+              </div> */}
 
               <div className="space-y-2 md:space-y-3">
                 <h2 className="text-3xl font-bold md:text-5xl">
-                  Awesome Work!
+                  Chapter Mastered!
                 </h2>
                 <p className="text-lg text-muted-foreground md:text-xl">
-                  You've mastered Chapter {chapter.chapterNo}: {chapter.title}
+                  You&apos;ve successfully completed Chapter {chapter.chapterNo}
+                  : {chapter.title}
                 </p>
               </div>
 
-              <div className="flex flex-col items-center justify-center gap-8 md:flex-row md:gap-16">
-                <div className="space-y-1">
-                  <div className="text-4xl font-bold text-indigo-400 md:text-5xl">
-                    {score ?? 0}%
-                  </div>
-                  <div className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase md:text-sm">
-                    Your Score
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-4xl font-bold text-foreground md:text-5xl">
-                    {chapter.quiz.totalQuestions}
-                  </div>
-                  <div className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase md:text-sm">
-                    Total Questions
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col justify-center gap-4 pt-4 md:flex-row md:gap-6 md:pt-6">
+              <div className="flex flex-col items-center justify-center gap-4 pt-4 md:flex-row md:gap-6 md:pt-6">
                 <button
-                  onClick={() => setActiveStep("content")}
+                  onClick={() => {
+                    setCurrentModuleIndex(0)
+                    setActiveStep("video")
+                  }}
                   className="flex items-center justify-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50 px-8 py-4 font-bold transition-all hover:bg-indigo-100"
                 >
                   <RotateCcw className="h-5 w-5" />
-                  Review Lesson
+                  Review Chapter
                 </button>
-                <button
-                  onClick={() => setActiveStep("quiz")}
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-8 py-4 font-bold text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-500"
-                >
-                  Try Again
-                </button>
+                {/* <div className="rounded-2xl bg-green-500 px-8 py-4 font-bold text-white shadow-lg shadow-green-500/20">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="h-5 w-5" />
+                    Certified
+                  </div>
+                </div> */}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {isAlreadyDone && activeStep !== "result" && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass-card flex items-center justify-center gap-3 border-green-500/10 bg-green-500/5 p-4"
-          >
-            <CheckCircle2 className="h-5 w-5 text-green-400" />
-            <span className="text-sm font-medium text-green-400/80">
-              You already completed this chapter with {score}% score.
-            </span>
-            <button
-              onClick={() => setActiveStep("result")}
-              className="text-sm font-bold text-green-400 underline underline-offset-4"
-            >
-              View Result
-            </button>
-          </motion.div>
-        )}
       </div>
     </div>
   )

@@ -1,27 +1,69 @@
 "use client"
-
-import { useState } from "react"
-import { Plus, X, Upload, FileJson, Video, FileText } from "lucide-react"
-import { createChapter } from "./actions"
+import { useState, useEffect } from "react"
+import { Plus, X, Upload, CheckCircle2, Trash2, Edit2 } from "lucide-react"
+import { createChapter, updateChapter } from "./actions"
 
 interface ChapterFormProps {
   gradeId: string
+  chapterToEdit?: any
 }
 
-export const ChapterForm = ({ gradeId }: ChapterFormProps) => {
+interface Module {
+  title: string
+  videoUrl: string
+  quizData: any
+}
+
+export const ChapterForm = ({ gradeId, chapterToEdit }: ChapterFormProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [quizJson, setQuizJson] = useState<any>(null)
-  const [contentType, setContentType] = useState<"video" | "pdf">("video")
+  const [modules, setModules] = useState<Module[]>([
+    { title: "", videoUrl: "", quizData: null },
+  ])
 
-  const handleJsonUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (chapterToEdit && isOpen) {
+      setModules(
+        chapterToEdit.modules.map((m: any) => ({
+          title: m.title || "",
+          videoUrl: m.videoUrl,
+          quizData: m.quiz
+            ? {
+                title: m.quiz.title,
+                totalQuestions: m.quiz.totalQuestions,
+                questions: m.quiz.questions,
+              }
+            : null,
+        }))
+      )
+    }
+  }, [chapterToEdit, isOpen])
+
+  const addModule = () => {
+    setModules([...modules, { title: "", videoUrl: "", quizData: null }])
+  }
+
+  const removeModule = (index: number) => {
+    setModules(modules.filter((_, i) => i !== index))
+  }
+
+  const updateModule = (index: number, field: keyof Module, value: any) => {
+    const newModules = [...modules]
+    newModules[index] = { ...newModules[index], [field]: value }
+    setModules(newModules)
+  }
+
+  const handleJsonUpload = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0]
     if (file) {
       const reader = new FileReader()
       reader.onload = (event) => {
         try {
           const json = JSON.parse(event.target?.result as string)
-          setQuizJson(json)
+          updateModule(index, "quizData", json)
         } catch (err) {
           alert("Invalid JSON format")
         }
@@ -32,18 +74,35 @@ export const ChapterForm = ({ gradeId }: ChapterFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!quizJson) {
-      alert("Please upload Quiz JSON first")
-      return
+
+    // Validation
+    for (let i = 0; i < modules.length; i++) {
+      if (!modules[i].videoUrl) {
+        alert(`Please provide Video URL for Module ${i + 1}`)
+        return
+      }
+      if (!modules[i].quizData) {
+        alert(`Please upload Quiz JSON for Module ${i + 1}`)
+        return
+      }
     }
+
     setLoading(true)
     const formData = new FormData(e.currentTarget)
     try {
-      await createChapter(gradeId, formData, quizJson)
+      if (chapterToEdit) {
+        await updateChapter(chapterToEdit.id, gradeId, formData, modules)
+      } else {
+        await createChapter(gradeId, formData, modules)
+      }
       setIsOpen(false)
-      setQuizJson(null)
+      if (!chapterToEdit) {
+        setModules([{ title: "", videoUrl: "", quizData: null }])
+      }
     } catch (err) {
-      alert("Error creating chapter")
+      alert(
+        chapterToEdit ? "Error updating chapter" : "Error creating chapter"
+      )
     } finally {
       setLoading(false)
     }
@@ -51,17 +110,28 @@ export const ChapterForm = ({ gradeId }: ChapterFormProps) => {
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 rounded-2xl bg-indigo-600 px-12 py-3.5 font-bold text-white shadow-xl shadow-indigo-500/20 transition-all hover:bg-indigo-500"
-      >
-        <Plus className="h-5 w-5" />
-        Add New Chapter
-      </button>
+      {chapterToEdit ? (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-5 py-2.5 text-amber-500 shadow-lg shadow-amber-500/10 transition-all hover:bg-amber-500 hover:text-white font-bold"
+          title="Edit Chapter"
+        >
+          <Edit2 className="h-4 w-4" />
+          Edit Content
+        </button>
+      ) : (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="flex items-center gap-2 rounded-2xl bg-indigo-600 px-12 py-3.5 font-bold text-white shadow-xl shadow-indigo-500/20 transition-all hover:bg-indigo-500"
+        >
+          <Plus className="h-5 w-5" />
+          Add New Chapter
+        </button>
+      )}
 
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-md">
-          <div className="glass-card relative my-auto w-full max-w-2xl animate-in p-6 md:p-10 duration-300 fade-in slide-in-from-bottom-8">
+          <div className="glass-card relative my-auto w-full max-w-3xl animate-in p-6 duration-300 fade-in slide-in-from-bottom-8 md:p-10">
             <button
               onClick={() => setIsOpen(false)}
               className="absolute top-6 right-6 text-muted-foreground transition-colors hover:text-foreground"
@@ -70,9 +140,11 @@ export const ChapterForm = ({ gradeId }: ChapterFormProps) => {
             </button>
 
             <div className="mb-8">
-              <h2 className="text-3xl font-bold">Add New Chapter</h2>
+              <h2 className="text-3xl font-bold">
+                {chapterToEdit ? "Edit Chapter" : "Add New Chapter"}
+              </h2>
               <p className="text-muted-foreground">
-                Upload lesson content and quiz details.
+                Define modules with videos and quizzes.
               </p>
             </div>
 
@@ -86,8 +158,9 @@ export const ChapterForm = ({ gradeId }: ChapterFormProps) => {
                     name="chapterNo"
                     type="number"
                     required
+                    defaultValue={chapterToEdit?.chapterNo}
                     placeholder="e.g. 1"
-                    className="w-full rounded-2xl border border-border bg-white px-5 py-4 shadow-sm transition-all outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10"
+                    className="w-full rounded-2xl border border-border bg-white px-5 py-4 text-black shadow-sm transition-all outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10"
                   />
                 </div>
                 <div className="space-y-2">
@@ -98,114 +171,140 @@ export const ChapterForm = ({ gradeId }: ChapterFormProps) => {
                     name="title"
                     type="text"
                     required
-                    placeholder="e.g. Living Things"
-                    className="w-full rounded-2xl border border-border bg-white px-5 py-4 shadow-sm transition-all outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10"
+                    defaultValue={chapterToEdit?.title}
+                    placeholder="e.g. Our Biosphere"
+                    className="w-full rounded-2xl border border-border bg-white px-5 py-4 text-black shadow-sm transition-all outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10"
                   />
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex w-fit items-center gap-4 rounded-2xl border border-border bg-secondary p-1">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold">Modules</h3>
                   <button
                     type="button"
-                    onClick={() => setContentType("video")}
-                    className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all ${contentType === "video" ? "bg-indigo-600 text-white shadow-lg" : "text-muted-foreground hover:text-foreground"}`}
+                    onClick={addModule}
+                    className="flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-500"
                   >
-                    <Video className="h-4 w-4" />
-                    Video URL
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setContentType("pdf")}
-                    className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all ${contentType === "pdf" ? "bg-indigo-600 text-white shadow-lg" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    <FileText className="h-4 w-4" />
-                    PDF URL
+                    <Plus className="h-4 w-4" />
+                    Add Module
                   </button>
                 </div>
 
-                {contentType === "video" ? (
-                  <>
-                    <input
-                      name="videoUrl"
-                      type="url"
-                      required
-                      placeholder="Enter Google Drive preview URL..."
-                      className="w-full rounded-2xl border border-border bg-white px-5 py-4 shadow-sm transition-all outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10"
-                    />
-                    <p className="text-md">
-                      Note:{" "}
-                      <span className="text-red-500">
-                        Use Google Drive preview URL only. Do not use the actual
-                        file URL. for e.g:
-                        https://drive.google.com/file/d/your_file_id/preview
-                        replace your view with{" "}
-                        <span className="font-extrabold text-red-900">
-                          preview
-                        </span>{" "}
-                        at the end of link
-                      </span>
-                    </p>
-                  </>
-                ) : (
+                {modules.map((module, index) => (
+                  <div
+                    key={index}
+                    className="relative space-y-4 rounded-3xl border border-border bg-secondary/30 p-6"
+                  >
+                    {modules.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeModule(index)}
+                        className="absolute -top-2 -right-2 rounded-full bg-red-100 p-2 text-red-600 shadow-md transition-all hover:bg-red-200"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                          Module Title (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={module.title}
+                          onChange={(e) =>
+                            updateModule(index, "title", e.target.value)
+                          }
+                          placeholder={`e.g. Topic ${index + 1}`}
+                          className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-black outline-none focus:border-indigo-600"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                          Video URL (Drive Preview)
+                        </label>
+                        <input
+                          type="url"
+                          value={module.videoUrl}
+                          onChange={(e) =>
+                            updateModule(index, "videoUrl", e.target.value)
+                          }
+                          placeholder="https://drive.google.com/file/d/.../preview"
+                          className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-black outline-none focus:border-indigo-600"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                        Quiz JSON
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".json"
+                          onChange={(e) => handleJsonUpload(index, e)}
+                          className="hidden"
+                          id={`json-upload-${index}`}
+                        />
+                        <label
+                          htmlFor={`json-upload-${index}`}
+                          className={`flex w-full cursor-pointer items-center justify-between rounded-xl border-2 border-dashed p-4 transition-all ${
+                            module.quizData
+                              ? "border-green-200 bg-green-50 text-green-600"
+                              : "border-border bg-white text-muted-foreground hover:bg-secondary"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {module.quizData ? (
+                              <CheckCircle2 className="h-5 w-5" />
+                            ) : (
+                              <Upload className="h-5 w-5" />
+                            )}
+                            <span className="text-sm font-medium">
+                              {module.quizData
+                                ? `Uploaded: ${module.quizData.title}`
+                                : "Upload Quiz JSON"}
+                            </span>
+                          </div>
+                          {module.quizData && (
+                            <span className="text-xs opacity-60">
+                              {module.quizData.questions.length} Qs
+                            </span>
+                          )}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
+                    STEM DIY Video URL
+                  </label>
+                  <input
+                    name="stemVideoUrl"
+                    type="url"
+                    defaultValue={chapterToEdit?.stemVideoUrl}
+                    placeholder="Optional STEM DIY video..."
+                    className="w-full rounded-2xl border border-border bg-white px-5 py-4 text-black shadow-sm transition-all outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
+                    PDF URL
+                  </label>
                   <input
                     name="pdfUrl"
                     type="url"
-                    required
-                    placeholder="Enter PDF public URL..."
-                    className="w-full rounded-2xl border border-border bg-white px-5 py-4 shadow-sm transition-all outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10"
+                    defaultValue={chapterToEdit?.pdfUrl}
+                    placeholder="Optional PDF resource..."
+                    className="w-full rounded-2xl border border-border bg-white px-5 py-4 text-black shadow-sm transition-all outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10"
                   />
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
-                  Quiz JSON Data
-                </label>
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept=".json"
-                    onChange={handleJsonUpload}
-                    className="hidden"
-                    id="json-upload"
-                  />
-                  <label
-                    htmlFor="json-upload"
-                    className={`flex w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl border-2 border-dashed p-8 transition-all ${
-                      quizJson
-                        ? "border-green-200 bg-green-50 text-green-600"
-                        : "border-border bg-white text-muted-foreground hover:border-border/80 hover:bg-secondary"
-                    }`}
-                  >
-                    {quizJson ? (
-                      <>
-                        <div className="rounded-full bg-green-100 p-4">
-                          <CheckCircle2 className="h-8 w-8" />
-                        </div>
-                        <div className="text-center">
-                          <p className="font-bold">
-                            JSON Uploaded: {quizJson.title}
-                          </p>
-                          <p className="text-xs opacity-60">
-                            {quizJson.questions.length} Questions found
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="rounded-full bg-secondary p-4">
-                          <Upload className="h-8 w-8" />
-                        </div>
-                        <div className="text-center">
-                          <p className="font-bold">Click to upload Quiz JSON</p>
-                          <p className="text-xs">
-                            Must contain title and questions array
-                          </p>
-                        </div>
-                      </>
-                    )}
-                  </label>
                 </div>
               </div>
 
@@ -214,7 +313,13 @@ export const ChapterForm = ({ gradeId }: ChapterFormProps) => {
                 type="submit"
                 className="w-full rounded-2xl bg-indigo-600 py-5 text-lg font-bold shadow-xl shadow-indigo-500/30 transition-all hover:bg-indigo-500 disabled:opacity-50"
               >
-                {loading ? "Processing..." : "Create Chapter"}
+                {loading
+                  ? chapterToEdit
+                    ? "Updating..."
+                    : "Creating..."
+                  : chapterToEdit
+                    ? "Update Chapter"
+                    : "Create Chapter"}
               </button>
             </form>
           </div>
@@ -223,6 +328,3 @@ export const ChapterForm = ({ gradeId }: ChapterFormProps) => {
     </>
   )
 }
-
-// Helper for check icon since I missed importing it above
-import { CheckCircle2 } from "lucide-react"
