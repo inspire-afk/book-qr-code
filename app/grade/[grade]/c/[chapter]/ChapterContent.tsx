@@ -66,33 +66,33 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
         </div> */}
 
         {/* Progress Tracker */}
-        <div className="flex items-center gap-1 md:gap-2 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-1 md:p-1.5 backdrop-blur-md overflow-x-auto no-scrollbar">
+        <div className="no-scrollbar flex items-center gap-1 overflow-x-auto rounded-2xl border border-indigo-100 bg-indigo-50/50 p-1 backdrop-blur-md md:gap-2 md:p-1.5">
           <button
             onClick={() => setActiveStep("content")}
-            className={`flex items-center gap-2 rounded-xl px-3 md:px-5 py-2 md:py-2.5 transition-all whitespace-nowrap ${activeStep === "content" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "text-muted-foreground hover:bg-white/50 hover:text-indigo-600"}`}
+            className={`flex items-center gap-2 rounded-xl px-3 py-2 whitespace-nowrap transition-all md:px-5 md:py-2.5 ${activeStep === "content" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "text-muted-foreground hover:bg-white/50 hover:text-indigo-600"}`}
           >
             <PlayCircle className="h-4 w-4" />
-            <span className="text-xs md:text-sm font-medium">Content</span>
+            <span className="text-xs font-medium md:text-sm">Content</span>
           </button>
           <button
             disabled={!contentCompleted}
             onClick={() => setActiveStep("quiz")}
-            className={`flex items-center gap-2 rounded-xl px-3 md:px-5 py-2 md:py-2.5 transition-all whitespace-nowrap ${activeStep === "quiz" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : contentCompleted ? "text-muted-foreground hover:bg-white/50 hover:text-indigo-600" : "cursor-not-allowed text-muted-foreground/20"}`}
+            className={`flex items-center gap-2 rounded-xl px-3 py-2 whitespace-nowrap transition-all md:px-5 md:py-2.5 ${activeStep === "quiz" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : contentCompleted ? "text-muted-foreground hover:bg-white/50 hover:text-indigo-600" : "cursor-not-allowed text-muted-foreground/20"}`}
           >
             {contentCompleted ? (
               <FileText className="h-4 w-4" />
             ) : (
               <Lock className="h-4 w-4" />
             )}
-            <span className="text-xs md:text-sm font-medium">Quiz</span>
+            <span className="text-xs font-medium md:text-sm">Quiz</span>
           </button>
           <button
             disabled={!isAlreadyDone && activeStep !== "result"}
             onClick={() => isAlreadyDone && setActiveStep("result")}
-            className={`flex items-center gap-2 rounded-xl px-3 md:px-5 py-2 md:py-2.5 transition-all whitespace-nowrap ${activeStep === "result" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : isAlreadyDone ? "text-muted-foreground hover:bg-white/50 hover:text-indigo-600" : "cursor-not-allowed text-muted-foreground/20"}`}
+            className={`flex items-center gap-2 rounded-xl px-3 py-2 whitespace-nowrap transition-all md:px-5 md:py-2.5 ${activeStep === "result" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : isAlreadyDone ? "text-muted-foreground hover:bg-white/50 hover:text-indigo-600" : "cursor-not-allowed text-muted-foreground/20"}`}
           >
             <Trophy className="h-4 w-4" />
-            <span className="text-xs md:text-sm font-medium">Result</span>
+            <span className="text-xs font-medium md:text-sm">Result</span>
           </button>
         </div>
       </div>
@@ -107,19 +107,18 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-6"
             >
-              <div className="glass-card group relative aspect-video">
-                <MediaViewer
-                  videoUrl={chapter.videoUrl}
-                  pdfUrl={chapter.pdfUrl}
-                />
-              </div>
+              <MediaViewer
+                videoUrl={chapter.videoUrl}
+                pdfUrl={chapter.pdfUrl}
+              />
+              <div className="glass-card group relative h-auto w-full overflow-hidden shadow-2xl"></div>
 
-              <div className="glass-card flex flex-col md:flex-row items-center justify-between border-indigo-500/10 bg-indigo-600/5 p-6 md:p-8 gap-6 md:gap-0">
+              <div className="glass-card flex flex-col items-center justify-between gap-6 border-indigo-500/10 bg-indigo-600/5 p-6 md:flex-row md:gap-0 md:p-8">
                 <div className="space-y-1 text-center md:text-left">
-                  <h3 className="text-lg md:text-xl font-bold">
+                  <h3 className="text-lg font-bold md:text-xl">
                     Ready to test your knowledge?
                   </h3>
-                  <p className="text-sm md:text-base text-muted-foreground">
+                  <p className="text-sm text-muted-foreground md:text-base">
                     {contentCompleted
                       ? "The quiz is now unlocked! Good luck."
                       : "Please go through the learning material to unlock the quiz."}
@@ -128,7 +127,7 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
                 <button
                   disabled={!contentCompleted}
                   onClick={() => setActiveStep("quiz")}
-                  className={`flex items-center gap-2 rounded-2xl px-8 md:px-10 py-3 md:py-4 font-bold transition-all w-full md:w-auto justify-center ${
+                  className={`flex w-full items-center justify-center gap-2 rounded-2xl px-8 py-3 font-bold transition-all md:w-auto md:px-10 md:py-4 ${
                     contentCompleted
                       ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/30 hover:bg-indigo-500"
                       : "cursor-not-allowed bg-secondary text-muted-foreground/30"
@@ -161,47 +160,49 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
               key="result"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="glass-card space-y-6 md:space-y-10 p-8 md:p-16 text-center"
+              className="glass-card space-y-6 p-8 text-center md:space-y-10 md:p-16"
             >
-              <div className="relative mx-auto flex h-24 w-24 md:h-32 md:w-32 items-center justify-center rounded-full border border-green-500/20 bg-green-500/10">
-                <Trophy className="h-12 w-12 md:h-16 md:w-16 text-green-400" />
+              <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-green-500/20 bg-green-500/10 md:h-32 md:w-32">
+                <Trophy className="h-12 w-12 text-green-400 md:h-16 md:w-16" />
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="absolute -top-1 -right-1 md:-top-2 md:-right-2 rounded-full bg-green-500 p-1 text-black"
+                  className="absolute -top-1 -right-1 rounded-full bg-green-500 p-1 text-black md:-top-2 md:-right-2"
                 >
                   <CheckCircle2 className="h-4 w-4 md:h-6 md:w-6" />
                 </motion.div>
               </div>
 
               <div className="space-y-2 md:space-y-3">
-                <h2 className="text-3xl md:text-5xl font-bold">Awesome Work!</h2>
-                <p className="text-lg md:text-xl text-muted-foreground">
+                <h2 className="text-3xl font-bold md:text-5xl">
+                  Awesome Work!
+                </h2>
+                <p className="text-lg text-muted-foreground md:text-xl">
                   You've mastered Chapter {chapter.chapterNo}: {chapter.title}
                 </p>
               </div>
 
-              <div className="flex flex-col md:flex-row justify-center items-center gap-8 md:gap-16">
+              <div className="flex flex-col items-center justify-center gap-8 md:flex-row md:gap-16">
                 <div className="space-y-1">
-                  <div className="text-4xl md:text-5xl font-bold text-indigo-400">
+                  <div className="text-4xl font-bold text-indigo-400 md:text-5xl">
                     {score ?? 0}%
                   </div>
-                  <div className="text-[10px] md:text-sm font-semibold tracking-widest text-muted-foreground uppercase">
+                  <div className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase md:text-sm">
                     Your Score
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <div className="text-4xl md:text-5xl font-bold text-foreground">
+                  <div className="text-4xl font-bold text-foreground md:text-5xl">
                     {chapter.quiz.totalQuestions}
                   </div>
-                  <div className="text-[10px] md:text-sm font-semibold tracking-widest text-muted-foreground uppercase">
+                  <div className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase md:text-sm">
                     Total Questions
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col md:flex-row justify-center gap-4 md:gap-6 pt-4 md:pt-6">
+              <div className="flex flex-col justify-center gap-4 pt-4 md:flex-row md:gap-6 md:pt-6">
                 <button
                   onClick={() => setActiveStep("content")}
                   className="flex items-center justify-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50 px-8 py-4 font-bold transition-all hover:bg-indigo-100"
@@ -211,7 +212,7 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
                 </button>
                 <button
                   onClick={() => setActiveStep("quiz")}
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-8 py-4 font-bold shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-500 text-white"
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-8 py-4 font-bold text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-500"
                 >
                   Try Again
                 </button>

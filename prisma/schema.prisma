@@ -27,8 +27,8 @@ model Chapter {
   grade     Grade    @relation(fields: [gradeId], references: [id])
   chapterNo Int
   title     String
-  videoUrl  String?
-  pdfUrl    String?
+  videoUrls String[]
+  pdfUrls   String[]
   quiz      Quiz?
   createdAt DateTime @default(now())
 }

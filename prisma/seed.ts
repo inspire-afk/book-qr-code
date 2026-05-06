@@ -19,8 +19,8 @@ async function main() {
           {
             chapterNo: 1,
             title: "Microorganisms: Friend and Foe",
-            videoUrl: "https://drive.google.com/file/d/1X5_K8R8Wk5z1h9jW-qZ0b2v3n4m5l6k7/preview",
-            pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+            videoUrls: ["https://drive.google.com/file/d/1X5_K8R8Wk5z1h9jW-qZ0b2v3n4m5l6k7/preview"],
+            pdfUrls: ["https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"],
             quiz: {
               create: {
                 title: "Microorganisms Quiz",
@@ -53,8 +53,8 @@ async function main() {
           {
             chapterNo: 2,
             title: "Synthetic Fibres and Plastics",
-            videoUrl: "https://drive.google.com/file/d/1Y6_L9S9Xl6z2j0kX-rA1c3w4o5n6m7l8/preview",
-            pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+            videoUrls: ["https://drive.google.com/file/d/1Y6_L9S9Xl6z2j0kX-rA1c3w4o5n6m7l8/preview"],
+            pdfUrls: ["https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"],
             quiz: {
               create: {
                 title: "Fibres Quiz",
