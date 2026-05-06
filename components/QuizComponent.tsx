@@ -78,27 +78,27 @@ export const QuizComponent = ({ quiz, onComplete, onCancel }: QuizComponentProps
   const isCorrect = selectedOptionData?.label === currentQuestion.correctAnswer || selectedOptionData?.isCorrect;
 
   return (
-    <div className="glass-card flex flex-col min-h-[600px] shadow-2xl shadow-indigo-500/10">
+    <div className="glass-card flex flex-col min-h-[500px] md:min-h-[600px] shadow-2xl shadow-indigo-500/10">
       {/* Quiz Header */}
-      <div className="p-8 border-b border-indigo-100 flex items-center justify-between bg-indigo-50/50">
-        <div className="flex items-center gap-4">
-          <div className="bg-indigo-600/20 p-3 rounded-2xl border border-indigo-500/30">
-            <HelpCircle className="h-6 w-6 text-indigo-400" />
+      <div className="p-4 md:p-8 border-b border-indigo-100 flex items-center justify-between bg-indigo-50/50">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="bg-indigo-600/20 p-2 md:p-3 rounded-2xl border border-indigo-500/30">
+            <HelpCircle className="h-5 w-5 md:h-6 md:w-6 text-indigo-400" />
           </div>
           <div>
-            <h3 className="font-bold text-xl">{quiz.title}</h3>
-            <div className="flex items-center gap-2 mt-1">
-               <span className="text-xs uppercase tracking-widest font-bold text-indigo-400">Step {currentIdx + 1}</span>
+            <h3 className="font-bold text-lg md:text-xl">{quiz.title}</h3>
+            <div className="flex items-center gap-2 mt-0.5 md:mt-1">
+               <span className="text-[10px] md:text-xs uppercase tracking-widest font-bold text-indigo-400">Step {currentIdx + 1}</span>
                <span className="h-1 w-1 rounded-full bg-indigo-200" />
-               <span className="text-sm text-muted-foreground">of {quiz.totalQuestions} questions</span>
+               <span className="text-xs md:text-sm text-muted-foreground">of {quiz.totalQuestions} questions</span>
             </div>
           </div>
         </div>
         <button
           onClick={onCancel}
-          className="text-sm font-bold text-muted-foreground/60 hover:text-indigo-600 transition-colors px-4 py-2 rounded-xl hover:bg-indigo-50"
+          className="text-xs md:text-sm font-bold text-muted-foreground/60 hover:text-indigo-600 transition-colors px-3 md:px-4 py-1.5 md:py-2 rounded-xl hover:bg-indigo-50"
         >
-          Quit Quiz
+          Quit
         </button>
       </div>
 
@@ -112,26 +112,26 @@ export const QuizComponent = ({ quiz, onComplete, onCancel }: QuizComponentProps
       </div>
 
       {/* Question Content */}
-      <div className="flex-1 p-8 md:p-16 space-y-10">
+      <div className="flex-1 p-6 md:p-16 space-y-8 md:space-y-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestion.id}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="space-y-10"
+            className="space-y-8 md:space-y-10"
           >
-            <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+            <h2 className="text-2xl md:text-4xl font-bold leading-tight">
               {currentQuestion.question}
             </h2>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 md:gap-4 sm:grid-cols-2">
               {options.map((option, idx) => (
                 <button
                   key={idx}
                   disabled={showRationale}
                   onClick={() => handleSelect(option.label)}
-                  className={`relative p-6 rounded-2xl text-left transition-all border group ${
+                  className={`relative p-4 md:p-6 rounded-2xl text-left transition-all border group ${
                     selectedOption === option.label
                       ? showRationale 
                         ? (option.isCorrect || option.label === currentQuestion.correctAnswer)
@@ -143,24 +143,24 @@ export const QuizComponent = ({ quiz, onComplete, onCancel }: QuizComponentProps
                         : "bg-secondary/50 border-border hover:border-indigo-200 hover:bg-indigo-50/50"
                   }`}
                 >
-                  <div className="flex items-center gap-5">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg transition-all ${
+                  <div className="flex items-center gap-3 md:gap-5">
+                    <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center font-bold text-base md:text-lg transition-all ${
                       selectedOption === option.label 
                         ? "bg-white text-indigo-600 shadow-lg" 
                         : "bg-indigo-100 text-indigo-600 group-hover:bg-indigo-200"
                     }`}>
                       {option.label}
                     </div>
-                    <span className="font-semibold text-lg">{option.text}</span>
+                    <span className="font-semibold text-base md:text-lg">{option.text}</span>
                   </div>
                   
                   {showRationale && (option.isCorrect || option.label === currentQuestion.correctAnswer) && (
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute -right-2 -top-2 bg-green-500 text-black p-1 rounded-full"
+                      className="absolute -right-1 -top-1 md:-right-2 md:-top-2 bg-green-500 text-black p-1 rounded-full"
                     >
-                      <CheckCircle2 className="h-5 w-5" />
+                      <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5" />
                     </motion.div>
                   )}
                 </button>
@@ -175,18 +175,18 @@ export const QuizComponent = ({ quiz, onComplete, onCancel }: QuizComponentProps
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`p-6 rounded-2xl border flex items-start gap-4 ${
+              className={`p-4 md:p-6 rounded-2xl border flex items-start gap-3 md:gap-4 ${
                 isCorrect ? "bg-green-500/5 border-green-500/20" : "bg-red-500/5 border-red-500/20"
               }`}
             >
               <div className={`p-2 rounded-xl ${isCorrect ? "bg-green-500/20" : "bg-red-500/20"}`}>
-                <Info className={`h-5 w-5 ${isCorrect ? "text-green-400" : "text-red-400"}`} />
+                <Info className={`h-4 w-4 md:h-5 md:w-5 ${isCorrect ? "text-green-400" : "text-red-400"}`} />
               </div>
               <div className="space-y-1">
-                <div className={`font-bold uppercase tracking-widest text-xs ${isCorrect ? "text-green-400" : "text-red-400"}`}>
+                <div className={`font-bold uppercase tracking-widest text-[10px] md:text-xs ${isCorrect ? "text-green-400" : "text-red-400"}`}>
                   {isCorrect ? "Correct Explanation" : "Wait, Why?"}
                 </div>
-                <p className="text-foreground/80 leading-relaxed italic">
+                <p className="text-sm md:text-base text-foreground/80 leading-relaxed italic">
                   {selectedOptionData?.rationale || (options.find(o => o.isCorrect || o.label === currentQuestion.correctAnswer)?.rationale)}
                 </p>
               </div>
@@ -201,9 +201,9 @@ export const QuizComponent = ({ quiz, onComplete, onCancel }: QuizComponentProps
           {currentQuestion.hint && !showRationale && (
             <button
               onClick={() => setShowHint(!showHint)}
-              className="flex items-center gap-2 text-sm font-bold text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 px-4 py-2 rounded-xl"
+              className="flex items-center gap-2 text-xs md:text-sm font-bold text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 px-3 md:px-4 py-1.5 md:py-2 rounded-xl"
             >
-              <Lightbulb className="h-4 w-4" />
+              <Lightbulb className="h-3.5 w-3.5 md:h-4 md:w-4" />
               {showHint ? "Hide Hint" : "Need a Hint?"}
             </button>
           )}
@@ -224,14 +224,16 @@ export const QuizComponent = ({ quiz, onComplete, onCancel }: QuizComponentProps
         <button
           disabled={!selectedOption}
           onClick={handleNext}
-          className={`flex items-center gap-2 px-12 py-4 rounded-2xl font-bold transition-all w-full sm:w-auto justify-center group ${
+          className={`flex items-center gap-2 px-8 md:px-12 py-3 md:py-4 rounded-2xl font-bold transition-all w-full sm:w-auto justify-center group ${
             selectedOption
               ? "bg-indigo-600 text-white hover:bg-indigo-500 shadow-xl shadow-indigo-500/30"
               : "bg-secondary text-muted-foreground/30 cursor-not-allowed"
           }`}
         >
-          {!showRationale ? "Check Answer" : (currentIdx === quiz.questions.length - 1 ? "Finish Quiz" : "Next Question")}
-          <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+          <span className="text-sm md:text-base">
+            {!showRationale ? "Check Answer" : (currentIdx === quiz.questions.length - 1 ? "Finish Quiz" : "Next Question")}
+          </span>
+          <ChevronRight className="h-4 w-4 md:h-5 md:w-5 group-hover:translate-x-1 transition-transform" />
         </button>
       </div>
     </div>

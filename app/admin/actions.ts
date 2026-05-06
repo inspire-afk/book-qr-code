@@ -60,3 +60,21 @@ export async function deleteChapter(chapterId: string, gradeId: string) {
 
   revalidatePath(`/admin/grade/${gradeId}`);
 }
+export async function deleteGrade(gradeId: string) {
+  // Delete all associated chapters, quizzes, and questions
+  const chapters = await prisma.chapter.findMany({ where: { gradeId } });
+  
+  for (const chapter of chapters) {
+    const quiz = await prisma.quiz.findUnique({ where: { chapterId: chapter.id } });
+    if (quiz) {
+      await prisma.question.deleteMany({ where: { quizId: quiz.id } });
+      await prisma.quiz.delete({ where: { id: quiz.id } });
+    }
+  }
+  
+  await prisma.chapter.deleteMany({ where: { gradeId } });
+  await prisma.grade.delete({ where: { id: gradeId } });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+}

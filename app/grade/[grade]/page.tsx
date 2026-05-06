@@ -1,16 +1,16 @@
-import { notFound } from "next/navigation";
-import prisma from "@/lib/prisma";
-import { Book, ChevronRight, GraduationCap } from "lucide-react";
-import Link from "next/link";
+import { notFound } from "next/navigation"
+import prisma from "@/lib/prisma"
+import { Book, ChevronRight, GraduationCap } from "lucide-react"
+import Link from "next/link"
 
 export default async function GradePage({
   params,
 }: {
-  params: Promise<{ grade: string }>;
+  params: Promise<{ grade: string }>
 }) {
-  const { grade: gradeParam } = await params;
-  const gradeInt = parseInt(gradeParam);
-  
+  const { grade: gradeParam } = await params
+  const gradeInt = parseInt(gradeParam)
+
   const grade = await prisma.grade.findUnique({
     where: { grade: gradeInt },
     include: {
@@ -18,61 +18,64 @@ export default async function GradePage({
         orderBy: { chapterNo: "asc" },
       },
     },
-  });
+  })
 
   if (!grade) {
-    return notFound();
+    return notFound()
   }
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="max-w-5xl mx-auto space-y-12">
+      <div className="mx-auto max-w-5xl space-y-12">
         <div className="space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-sm font-medium">
+          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-600">
             <Book className="h-4 w-4" />
             Grade {grade.grade}
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold gradient-text">
-            {grade.title}
-          </h1>
-          <p className="text-muted-foreground text-xl max-w-3xl">
-            Dive into the world of {grade.title}. Master each chapter through interactive videos, comprehensive notes, and challenging quizzes.
+          <h1 className="text-4xl font-bold md:text-6xl">{grade.title}</h1>
+          <p className="max-w-3xl text-xl text-muted-foreground">
+            Dive into the world of {grade.title}. Master each chapter through
+            interactive videos, comprehensive notes, and challenging quizzes.
           </p>
         </div>
 
         <div className="space-y-6">
           <div className="flex items-center justify-between border-b border-border pb-4">
-            <h2 className="text-2xl font-bold">Curriculum Chapters</h2>
-            <span className="text-sm text-muted-foreground">{grade.chapters.length} Chapters Available</span>
+            <h2 className="text-2xl font-bold">Curriculum</h2>
+            <span className="font-sans text-sm text-foreground">
+              {grade.chapters.length} Chapters Available
+            </span>
           </div>
-          
+
           <div className="grid gap-6 sm:grid-cols-2">
             {grade.chapters.map((chapter) => (
               <Link
                 key={chapter.id}
                 href={`/grade/${grade.grade}/c/${chapter.chapterNo}`}
-                className="glass-card group p-8 flex items-center justify-between hover:bg-indigo-50/50 transition-all"
+                className="glass-card group flex items-center justify-between p-5 transition-all hover:bg-indigo-50/50 md:p-6"
               >
-                <div className="space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center border border-indigo-100 text-indigo-600 font-bold group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                <div className="flex items-center gap-5">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50 font-bold text-indigo-600 transition-all group-hover:bg-indigo-600 group-hover:text-white">
                     {chapter.chapterNo}
                   </div>
-                  <h3 className="text-xl font-bold group-hover:text-indigo-600 transition-colors">
-                    {chapter.title}
-                  </h3>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <GraduationCap className="h-4 w-4" />
-                      Quiz Included
-                    </span>
+                  <div className="space-y-1">
+                    <h3 className="line-clamp-1 text-lg font-bold transition-colors group-hover:text-indigo-600 md:text-xl">
+                      {chapter.title}
+                    </h3>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground md:text-sm">
+                      <span className="flex items-center gap-1">
+                        <GraduationCap className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                        Quiz Included
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:text-indigo-600 group-hover:translate-x-2 transition-all" />
+                <ChevronRight className="h-5 w-5 text-muted-foreground transition-all group-hover:translate-x-2 group-hover:text-indigo-600 md:h-6 md:w-6" />
               </Link>
             ))}
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

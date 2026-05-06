@@ -3,7 +3,7 @@ import QRCode from "qrcode"
 export const generateQRCode = async (path: string) => {
   const baseUrl =
     process.env.NODE_ENV === "production"
-      ? "https://hunarho-book.vercel.app"
+      ? "https://inspire-book.vercel.app"
       : "http://localhost:3000"
   const url = `${baseUrl}${path}`
   try {

@@ -84,7 +84,11 @@ export default async function GradeDetailPage({
                     path={`/grade/${grade.grade}/c/${chapter.chapterNo}`} 
                     fileName={`Grade-${grade.grade}-Ch-${chapter.chapterNo}`}
                   />
-                  <DeleteChapterButton chapterId={chapter.id} gradeId={grade.id} />
+                  <DeleteChapterButton 
+                    chapterId={chapter.id} 
+                    gradeId={grade.id} 
+                    chapterName={chapter.title} 
+                  />
                 </div>
               </div>
             ))}
