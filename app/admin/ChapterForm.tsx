@@ -17,9 +17,7 @@ interface Module {
 export const ChapterForm = ({ gradeId, chapterToEdit }: ChapterFormProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [modules, setModules] = useState<Module[]>([
-    { title: "", videoUrl: "", quizData: null },
-  ])
+  const [modules, setModules] = useState<Module[]>([])
 
   useEffect(() => {
     if (chapterToEdit && isOpen) {
@@ -97,7 +95,7 @@ export const ChapterForm = ({ gradeId, chapterToEdit }: ChapterFormProps) => {
       }
       setIsOpen(false)
       if (!chapterToEdit) {
-        setModules([{ title: "", videoUrl: "", quizData: null }])
+        setModules([])
       }
     } catch (err) {
       alert(
@@ -234,6 +232,7 @@ export const ChapterForm = ({ gradeId, chapterToEdit }: ChapterFormProps) => {
                           placeholder="https://drive.google.com/file/d/.../preview"
                           className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-black outline-none focus:border-indigo-600"
                         />
+                        <p className="text-md">Note: In google drive url replace <strong className="text-red-600">view</strong> with <strong className="text-green-600">preview</strong>e.g https://drive.google.com/file/d/preview</p>
                       </div>
                     </div>
 
@@ -281,7 +280,7 @@ export const ChapterForm = ({ gradeId, chapterToEdit }: ChapterFormProps) => {
                 ))}
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-1">
                 <div className="space-y-2">
                   <label className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
                     STEM DIY Video URL
@@ -294,18 +293,8 @@ export const ChapterForm = ({ gradeId, chapterToEdit }: ChapterFormProps) => {
                     className="w-full rounded-2xl border border-border bg-white px-5 py-4 text-black shadow-sm transition-all outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
-                    PDF URL
-                  </label>
-                  <input
-                    name="pdfUrl"
-                    type="url"
-                    defaultValue={chapterToEdit?.pdfUrl}
-                    placeholder="Optional PDF resource..."
-                    className="w-full rounded-2xl border border-border bg-white px-5 py-4 text-black shadow-sm transition-all outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10"
-                  />
-                </div>
+                <p className="text-md">Note: In google drive url replace <strong className="text-red-600">view</strong> with <strong className="text-green-600">preview</strong> <br />
+                e.g https://drive.google.com/file/d/11Abtdhkgf8IS8xQQthTxYi5LrqpAad-4/preview</p>
               </div>
 
               <button

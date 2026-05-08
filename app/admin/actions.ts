@@ -23,7 +23,6 @@ export async function createChapter(
   const chapterNo = parseInt(formData.get("chapterNo") as string)
   const title = formData.get("title") as string
   const stemVideoUrl = (formData.get("stemVideoUrl") as string) || null
-  const pdfUrl = (formData.get("pdfUrl") as string) || null
 
   await prisma.chapter.create({
     data: {
@@ -31,7 +30,6 @@ export async function createChapter(
       chapterNo,
       title,
       stemVideoUrl,
-      pdfUrl,
       modules: {
         create: modules.map((m, index) => ({
           title: m.title || `Module ${index + 1}`,
@@ -71,7 +69,6 @@ export async function updateChapter(
   const chapterNo = parseInt(formData.get("chapterNo") as string)
   const title = formData.get("title") as string
   const stemVideoUrl = (formData.get("stemVideoUrl") as string) || null
-  const pdfUrl = (formData.get("pdfUrl") as string) || null
 
   // 1. Delete existing modules and quizzes
   const oldModules = await prisma.chapterModule.findMany({
@@ -93,7 +90,6 @@ export async function updateChapter(
       chapterNo,
       title,
       stemVideoUrl,
-      pdfUrl,
       modules: {
         create: modules.map((m, index) => ({
           title: m.title || `Module ${index + 1}`,

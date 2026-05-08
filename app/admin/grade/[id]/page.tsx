@@ -60,12 +60,18 @@ export default async function GradeDetailPage({
         </div>
 
         <div className="space-y-4">
-          <h2 className="flex items-center gap-2 text-xl font-bold">
-            Chapters List
-            <span className="rounded-full border border-indigo-500/30 bg-indigo-600/20 px-2 py-0.5 text-xs text-indigo-400">
-              {grade.chapters.length}
-            </span>
-          </h2>
+          <div className="flex justify-between w-full ">
+            <h2 className="flex items-center gap-2 text-xl font-bold">
+              Chapters List
+              <span className="rounded-full border border-indigo-500/30 bg-indigo-600/20 px-2 py-0.5 text-xs text-indigo-400">
+                {grade.chapters.length}
+              </span>
+            </h2>
+            <GenerateQRButton
+              path={`/grade/${grade.grade}`}
+              fileName={`Grade-${grade.grade}`}
+            />
+          </div>
 
           <div className="grid gap-4">
             {grade.chapters.map((chapter) => (
@@ -101,10 +107,6 @@ export default async function GradeDetailPage({
                 </div>
                 <div className="flex items-center gap-2">
                   <ChapterForm gradeId={grade.id} chapterToEdit={chapter} />
-                  <GenerateQRButton
-                    path={`/grade/${grade.grade}/c/${chapter.chapterNo}`}
-                    fileName={`Grade-${grade.grade}-Ch-${chapter.chapterNo}`}
-                  />
                   <DeleteChapterButton
                     chapterId={chapter.id}
                     gradeId={grade.id}

@@ -19,18 +19,21 @@ interface ChapterContentProps {
 }
 
 export const ChapterContent = ({ chapter }: ChapterContentProps) => {
+  const hasModules = chapter.modules && chapter.modules.length > 0
+  const hasStem = !!chapter.stemVideoUrl
+
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0)
   const [activeStep, setActiveStep] = useState<
-    "video" | "quiz" | "stem" | "result"
-  >("video")
+    "video" | "quiz" | "stem" | "result" | "none"
+  >(hasModules ? "video" : hasStem ? "stem" : "none")
   const [videoCompleted, setVideoCompleted] = useState(false)
 
   const { completeChapter, isChapterCompleted, setQuizScore } =
     useProgressStore()
 
   const isAlreadyDone = isChapterCompleted(chapter.id)
-  const currentModule = chapter.modules[currentModuleIndex]
-  const isLastModule = currentModuleIndex === chapter.modules.length - 1
+  const currentModule = hasModules ? chapter.modules[currentModuleIndex] : null
+  const isLastModule = hasModules ? currentModuleIndex === chapter.modules.length - 1 : true
 
   useEffect(() => {
     // Reset video completion when moving to a new module or step
@@ -78,51 +81,53 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
           <h1 className="text-2xl font-black md:text-4xl">{chapter.title}</h1>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-2 rounded-3xl border border-indigo-100 bg-indigo-50/50 p-2 backdrop-blur-md">
-          {chapter.modules.map((m: any, i: number) => (
-            <div key={m.id} className="flex items-center gap-2">
+        {(hasModules || hasStem) && (
+          <div className="flex flex-wrap justify-center gap-2 rounded-3xl border border-indigo-100 bg-indigo-50/50 p-2 backdrop-blur-md">
+            {chapter.modules.map((m: any, i: number) => (
+              <div key={m.id} className="flex items-center gap-2">
+                <button
+                  disabled={i > currentModuleIndex && !isAlreadyDone}
+                  onClick={() => {
+                    setCurrentModuleIndex(i)
+                    setActiveStep("video")
+                  }}
+                  className={`flex h-10 w-10 items-center justify-center rounded-full transition-all md:h-12 md:w-12 ${
+                    i === currentModuleIndex
+                      ? "bg-indigo-600 text-white shadow-lg"
+                      : i < currentModuleIndex || isAlreadyDone
+                        ? "bg-green-500 text-white"
+                        : "bg-white text-muted-foreground opacity-50"
+                  }`}
+                >
+                  {i < currentModuleIndex || isAlreadyDone ? (
+                    <CheckCircle2 className="h-5 w-5" />
+                  ) : (
+                    <span className="text-sm font-bold">{i + 1}</span>
+                  )}
+                </button>
+              </div>
+            ))}
+            {chapter.stemVideoUrl && (
               <button
-                disabled={i > currentModuleIndex && !isAlreadyDone}
-                onClick={() => {
-                  setCurrentModuleIndex(i)
-                  setActiveStep("video")
-                }}
+                disabled={
+                  !isAlreadyDone &&
+                  (currentModuleIndex < chapter.modules.length - 1 ||
+                    activeStep !== "stem")
+                }
+                onClick={() => setActiveStep("stem")}
                 className={`flex h-10 w-10 items-center justify-center rounded-full transition-all md:h-12 md:w-12 ${
-                  i === currentModuleIndex
+                  activeStep === "stem"
                     ? "bg-indigo-600 text-white shadow-lg"
-                    : i < currentModuleIndex || isAlreadyDone
+                    : isAlreadyDone
                       ? "bg-green-500 text-white"
                       : "bg-white text-muted-foreground opacity-50"
                 }`}
               >
-                {i < currentModuleIndex || isAlreadyDone ? (
-                  <CheckCircle2 className="h-5 w-5" />
-                ) : (
-                  <span className="text-sm font-bold">{i + 1}</span>
-                )}
+                <Play className="h-5 w-5" />
               </button>
-            </div>
-          ))}
-          {chapter.stemVideoUrl && (
-            <button
-              disabled={
-                !isAlreadyDone &&
-                (currentModuleIndex < chapter.modules.length - 1 ||
-                  activeStep !== "stem")
-              }
-              onClick={() => setActiveStep("stem")}
-              className={`flex h-10 w-10 items-center justify-center rounded-full transition-all md:h-12 md:w-12 ${
-                activeStep === "stem"
-                  ? "bg-indigo-600 text-white shadow-lg"
-                  : isAlreadyDone
-                    ? "bg-green-500 text-white"
-                    : "bg-white text-muted-foreground opacity-50"
-              }`}
-            >
-              <Play className="h-5 w-5" />
-            </button>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -157,10 +162,9 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
               <MediaViewer
                 videoUrl={
                   activeStep === "video"
-                    ? currentModule.videoUrl
+                    ? currentModule?.videoUrl
                     : chapter.stemVideoUrl
                 }
-                pdfUrl={chapter.pdfUrl}
               />
 
               <div className="glass-card flex flex-col items-center justify-between gap-6 border-indigo-500/10 bg-indigo-600/5 p-6 md:flex-row md:p-8">
@@ -273,6 +277,16 @@ export const ChapterContent = ({ chapter }: ChapterContentProps) => {
                   </div>
                 </div> */}
               </div>
+            </motion.div>
+          )}
+          {activeStep === "none" && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex h-64 flex-col items-center justify-center space-y-4 rounded-3xl border-2 border-dashed border-indigo-100 bg-indigo-50/20 text-indigo-400"
+            >
+              <FileText className="h-12 w-12 opacity-20" />
+              <p className="font-medium">No content available for this chapter yet.</p>
             </motion.div>
           )}
         </AnimatePresence>

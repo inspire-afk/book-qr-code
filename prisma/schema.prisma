@@ -28,7 +28,6 @@ model Chapter {
   chapterNo    Int
   title        String
   stemVideoUrl String?
-  pdfUrl       String?
   modules      ChapterModule[]
   createdAt    DateTime        @default(now())
 }
