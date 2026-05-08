@@ -96,12 +96,6 @@ export default async function GradeDetailPage({
                           STEM DIY
                         </span>
                       )}
-                      {chapter.pdfUrl && (
-                        <span className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-red-400 uppercase">
-                          <FileText className="h-3.5 w-3.5" />
-                          PDF
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
