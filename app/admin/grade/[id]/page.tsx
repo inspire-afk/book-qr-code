@@ -1,7 +1,8 @@
+export const dynamic = "force-dynamic"
 import prisma from "@/lib/prisma"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { ChevronLeft, Plus, FileVideo, FileText, Trash2 } from "lucide-react"
+import { ChevronLeft, Plus, FileVideo } from "lucide-react"
 import { ChapterForm } from "../../ChapterForm"
 import { DeleteChapterButton } from "../../DeleteChapterButton"
 import { GenerateQRButton } from "../../GenerateQRButton"
@@ -94,11 +95,11 @@ export default async function GradeDetailPage({
                     path={`/grade/${grade.grade}/c/${chapter.chapterNo}`}
                     fileName={`Grade-${grade.grade}-${chapter.chapterNo}`}
                   />
-                  <DeleteChapterButton
+                  {/* <DeleteChapterButton
                     chapterId={chapter.id}
                     gradeId={grade.id}
                     chapterName={chapter.title}
-                  />
+                  /> */}
                 </div>
               </div>
             ))}

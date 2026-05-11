@@ -35,7 +35,7 @@ export const GenerateQRButton = ({ path, fileName }: GenerateQRButtonProps) => {
     <button
       onClick={handleDownload}
       disabled={loading}
-      className="flex items-center gap-2 rounded-xl border border-border bg-secondary px-4 py-2.5 text-sm font-bold text-muted-foreground transition-all hover:border-border/50 hover:bg-secondary/80 hover:text-foreground"
+      className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-secondary px-4 py-2.5 text-sm font-bold text-muted-foreground transition-all hover:border-border/50 hover:bg-secondary/80 hover:text-foreground"
       title="Generate & Download QR Code"
     >
       {loading ? (

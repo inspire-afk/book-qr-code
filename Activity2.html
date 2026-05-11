@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&amp;display=swap" rel="stylesheet">
+  <style>
+* { font-family: 'Nunito', sans-serif; box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+
+.drop-zone { min-height: 80px; transition: background 0.2s, transform 0.15s; }
+.drop-zone.drag-over { background: rgba(255,200,50,0.25); transform: scale(1.02); }
+.draggable-item { cursor: grab; transition: transform 0.15s, box-shadow 0.15s; user-select: none; touch-action: none; }
+.draggable-item:active { cursor: grabbing; }
+.draggable-item:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+.correct-item { border-color: #22c55e !important; background: #f0fdf4 !important; }
+.incorrect-item { border-color: #ef4444 !important; background: #fef2f2 !important; animation: shake 0.4s; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+@keyframes popIn { from{opacity:0;transform:scale(0.8)} to{opacity:1;transform:scale(1)} }
+.pop-in { animation: popIn 0.3s ease-out forwards; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+.float-anim { animation: float 3s ease-in-out infinite; }
+
+.number-line-bg {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 3px solid #f59e0b;
+}
+.category-card {
+  border: 3px dashed #94a3b8;
+  border-radius: 16px;
+  transition: border-color 0.2s;
+}
+.category-card.has-items { border-style: solid; border-color: #6366f1; }
+
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  padding: 12px 24px; border-radius: 12px; color: white; font-weight: 700;
+  z-index: 100; animation: popIn 0.3s ease-out;
+}
+</style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full overflow-auto" style="background: linear-gradient(160deg, #ede9fe 0%, #dbeafe 40%, #fce7f3 100%);">
+  <div id="app" class="w-full h-full flex flex-col items-center justify-center p-4"><!-- NAME SCREEN -->
+   <div id="nameScreen" class="flex flex-col items-center justify-center gap-6 pop-in">
+    <div class="float-anim text-6xl mb-2">
+     🧮
+    </div>
+    <h1 id="titleDisplay" class="text-3xl md:text-4xl font-black text-indigo-700 text-center">Number Line Addition Sort</h1>
+    <p id="instrDisplay" class="text-base md:text-lg text-slate-600 text-center max-w-md">Use the number line to add, then drag each problem to the correct sum group!</p>
+    <div class="w-full max-w-xs flex flex-col gap-3"><label for="nameInput" class="font-bold text-slate-700">What's your name?</label> <input id="nameInput" type="text" placeholder="Type your name here..." class="w-full px-4 py-3 rounded-xl border-2 border-indigo-300 focus:border-indigo-500 outline-none text-lg" maxlength="30"> <button id="startBtn" onclick="startActivity()" disabled class="w-full py-3 rounded-xl font-bold text-lg text-white bg-indigo-500 opacity-50 cursor-not-allowed transition-all">Let's Go! 🚀</button>
+    </div>
+   </div><!-- ACTIVITY SCREEN -->
+   <div id="activityScreen" class="hidden w-full max-w-4xl flex flex-col gap-4">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+     <h2 id="activityTitle" class="text-xl md:text-2xl font-black text-indigo-700">Number Line Addition Sort</h2>
+     <div id="playerInfo" class="text-sm font-semibold text-slate-500"></div>
+    </div><!-- NUMBER LINE -->
+    <div class="number-line-bg rounded-2xl p-3 flex flex-col items-center gap-1">
+     <p class="text-xs font-bold text-amber-800">Number Line Helper</p>
+     <div class="flex items-center gap-0 overflow-x-auto w-full justify-center">
+      <div class="flex items-end"><!-- Numbers 0-20 -->
+       <script>
+            // Will be drawn by JS
+          </script>
+      </div>
+     </div>
+     <div id="numberLine" class="flex items-center"></div>
+    </div>
+    <p id="activityInstr" class="text-sm text-slate-500 text-center font-semibold">Drag each addition problem into the correct sum group below!</p><!-- CATEGORIES -->
+    <div id="categoriesContainer" class="grid grid-cols-3 gap-3"></div><!-- ITEMS TO SORT -->
+    <div class="bg-white/70 rounded-2xl p-4 border-2 border-slate-200">
+     <p class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">Problems to Sort</p>
+     <div id="itemsPool" class="flex flex-wrap gap-2 justify-center min-h-[50px]"></div>
+    </div><!-- BUTTONS -->
+    <div class="flex gap-3 justify-center flex-wrap"><button id="checkBtn" onclick="checkAnswers()" disabled class="px-6 py-3 rounded-xl font-bold text-white bg-emerald-500 opacity-50 cursor-not-allowed transition-all">✅ Check Answers</button> <button id="tryAgainBtn" onclick="tryAgain()" class="hidden px-6 py-3 rounded-xl font-bold text-white bg-amber-500 transition-all hover:bg-amber-600">🔄 Try Again</button> <button id="resetBtn" onclick="resetActivity()" class="hidden px-6 py-3 rounded-xl font-bold text-slate-600 bg-slate-200 transition-all hover:bg-slate-300">↩️ Start Over</button>
+    </div>
+   </div><!-- RESULTS TOAST -->
+   <div id="toast" class="toast hidden"></div>
+  </div>
+  <script>
+// ---- CONFIG & SDK ----
+const defaultConfig = {
+  activity_title: 'Number Line Addition Sort',
+  instruction_text: 'Use the number line to add, then drag each problem to the correct sum group!',
+  background_color: '#ede9fe',
+  surface_color: '#ffffff',
+  text_color: '#334155',
+  primary_action_color: '#6366f1',
+  secondary_action_color: '#10b981',
+  font_family: 'Nunito',
+  font_size: 16
+};
+
+function applyConfig(config) {
+  const c = { ...defaultConfig, ...config };
+  const font = c.font_family || defaultConfig.font_family;
+  const baseSize = c.font_size || defaultConfig.font_size;
+  document.body.style.background = `linear-gradient(160deg, ${c.background_color} 0%, #dbeafe 40%, #fce7f3 100%)`;
+  document.querySelectorAll('.bg-white\\/70, .category-card').forEach(el => el.style.backgroundColor = c.surface_color);
+
+  const titleEl = document.getElementById('titleDisplay');
+  const actTitle = document.getElementById('activityTitle');
+  const instrEl = document.getElementById('instrDisplay');
+  const actInstr = document.getElementById('activityInstr');
+  if (titleEl) { titleEl.textContent = c.activity_title; titleEl.style.color = c.primary_action_color; titleEl.style.fontFamily = `${font}, sans-serif`; titleEl.style.fontSize = `${baseSize * 2}px`; }
+  if (actTitle) { actTitle.textContent = c.activity_title; actTitle.style.color = c.primary_action_color; actTitle.style.fontFamily = `${font}, sans-serif`; actTitle.style.fontSize = `${baseSize * 1.5}px`; }
+  if (instrEl) { instrEl.textContent = c.instruction_text; instrEl.style.color = c.text_color; instrEl.style.fontFamily = `${font}, sans-serif`; instrEl.style.fontSize = `${baseSize}px`; }
+  if (actInstr) { actInstr.textContent = c.instruction_text; actInstr.style.fontFamily = `${font}, sans-serif`; actInstr.style.fontSize = `${baseSize * 0.85}px`; }
+
+  const startBtn = document.getElementById('startBtn');
+  if (startBtn) startBtn.style.backgroundColor = c.primary_action_color;
+  const checkBtn = document.getElementById('checkBtn');
+  if (checkBtn) checkBtn.style.backgroundColor = c.secondary_action_color;
+
+  document.body.style.fontFamily = `${font}, sans-serif`;
+  document.body.style.fontSize = `${baseSize}px`;
+  document.body.style.color = c.text_color;
+}
+
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => applyConfig(config),
+    mapToCapabilities: (config) => {
+      const c = config || {};
+      return {
+        recolorables: [
+          { get: () => c.background_color || defaultConfig.background_color, set: v => { c.background_color = v; window.elementSdk?.setConfig({ background_color: v }); } },
+          { get: () => c.surface_color || defaultConfig.surface_color, set: v => { c.surface_color = v; window.elementSdk?.setConfig({ surface_color: v }); } },
+          { get: () => c.text_color || defaultConfig.text_color, set: v => { c.text_color = v; window.elementSdk?.setConfig({ text_color: v }); } },
+          { get: () => c.primary_action_color || defaultConfig.primary_action_color, set: v => { c.primary_action_color = v; window.elementSdk?.setConfig({ primary_action_color: v }); } },
+          { get: () => c.secondary_action_color || defaultConfig.secondary_action_color, set: v => { c.secondary_action_color = v; window.elementSdk?.setConfig({ secondary_action_color: v }); } }
+        ],
+        borderables: [],
+        fontEditable: { get: () => c.font_family || defaultConfig.font_family, set: v => { c.font_family = v; window.elementSdk?.setConfig({ font_family: v }); } },
+        fontSizeable: { get: () => c.font_size || defaultConfig.font_size, set: v => { c.font_size = v; window.elementSdk?.setConfig({ font_size: v }); } }
+      };
+    },
+    mapToEditPanelValues: (config) => {
+      const c = config || {};
+      return new Map([
+        ['activity_title', c.activity_title || defaultConfig.activity_title],
+        ['instruction_text', c.instruction_text || defaultConfig.instruction_text]
+      ]);
+    }
+  });
+}
+
+// ---- DATA SDK ----
+let currentAttempt = 0;
+let studentName = '';
+let allRecords = [];
+
+const dataHandler = {
+  onDataChanged(data) { allRecords = data; }
+};
+if (window.dataSdk) {
+  window.dataSdk.init(dataHandler);
+}
+
+// ---- GAME DATA ----
+// Categories: sums 0-5, sums 6-10, sums 11-15
+const categories = [
+  { id: 'cat1', label: 'Sum is 0 to 5', emoji: '🟢', min: 0, max: 5 },
+  { id: 'cat2', label: 'Sum is 6 to 10', emoji: '🔵', min: 6, max: 10 },
+  { id: 'cat3', label: 'Sum is 11 to 15', emoji: '🟣', min: 11, max: 15 }
+];
+
+// Generate unique addition problems
+function generateProblems() {
+  const problems = [];
+  const used = new Set();
+  const targets = [
+    { a: 1, b: 2 }, { a: 2, b: 1 }, { a: 0, b: 4 }, // sums 3-4
+    { a: 3, b: 3 }, { a: 2, b: 5 }, { a: 4, b: 4 }, { a: 1, b: 8 }, // sums 6-9
+    { a: 5, b: 5 }, // sum 10
+    { a: 6, b: 5 }, { a: 7, b: 4 }, { a: 8, b: 5 }, // sums 11-13
+  ];
+  for (const t of targets) {
+    const key = `${t.a}+${t.b}`;
+    if (!used.has(key)) {
+      used.add(key);
+      problems.push({ a: t.a, b: t.b, sum: t.a + t.b, id: `p_${t.a}_${t.b}` });
+    }
+  }
+  return problems;
+}
+
+let problems = [];
+let placements = {}; // itemId -> categoryId
+
+function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+
+// ---- NAME INPUT ----
+const nameInput = document.getElementById('nameInput');
+const startBtn = document.getElementById('startBtn');
+nameInput.addEventListener('input', () => {
+  const valid = nameInput.value.trim().length > 0;
+  startBtn.disabled = !valid;
+  startBtn.classList.toggle('opacity-50', !valid);
+  startBtn.classList.toggle('cursor-not-allowed', !valid);
+  startBtn.classList.toggle('hover:bg-indigo-600', valid);
+});
+nameInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !startBtn.disabled) startActivity(); });
+
+function startActivity() {
+  studentName = nameInput.value.trim();
+  currentAttempt = 0;
+  document.getElementById('nameScreen').classList.add('hidden');
+  document.getElementById('activityScreen').classList.remove('hidden');
+  document.getElementById('activityScreen').classList.add('pop-in');
+  initRound();
+}
+
+function initRound() {
+  currentAttempt++;
+  problems = shuffle(generateProblems());
+  placements = {};
+  document.getElementById('playerInfo').textContent = `👤 ${studentName} | Attempt ${currentAttempt}`;
+  document.getElementById('tryAgainBtn').classList.add('hidden');
+  document.getElementById('resetBtn').classList.add('hidden');
+  renderNumberLine();
+  renderCategories();
+  renderPool();
+  updateCheckBtn();
+}
+
+function renderNumberLine() {
+  const nl = document.getElementById('numberLine');
+  nl.innerHTML = '';
+  for (let i = 0; i <= 20; i++) {
+    const tick = document.createElement('div');
+    tick.className = 'flex flex-col items-center';
+    tick.style.minWidth = '24px';
+    tick.innerHTML = `<div class="w-0.5 h-3 bg-amber-700"></div><span class="text-xs font-bold text-amber-900">${i}</span>`;
+    nl.appendChild(tick);
+    if (i < 20) {
+      const seg = document.createElement('div');
+      seg.className = 'h-0.5 bg-amber-700 flex-shrink-0';
+      seg.style.width = '12px';
+      seg.style.marginTop = '-14px';
+      nl.appendChild(seg);
+    }
+  }
+}
+
+function renderCategories() {
+  const container = document.getElementById('categoriesContainer');
+  container.innerHTML = '';
+  categories.forEach(cat => {
+    const div = document.createElement('div');
+    div.className = 'category-card p-3 flex flex-col gap-2 bg-white/60';
+    div.id = cat.id;
+    div.innerHTML = `<div class="text-center font-black text-sm">${cat.emoji} ${cat.label}</div><div class="drop-zone rounded-xl p-2 flex flex-wrap gap-2 justify-center" data-cat="${cat.id}"></div>`;
+    container.appendChild(div);
+
+    const zone = div.querySelector('.drop-zone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); handleDrop(e, cat.id); });
+    // Touch
+    zone.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+  });
+}
+
+function renderPool() {
+  const pool = document.getElementById('itemsPool');
+  pool.innerHTML = '';
+  problems.forEach(p => {
+    if (!placements[p.id]) {
+      pool.appendChild(createItemEl(p));
+    }
+  });
+}
+
+function createItemEl(p) {
+  const el = document.createElement('div');
+  el.className = 'draggable-item pop-in bg-white border-2 border-indigo-300 rounded-xl px-4 py-2 font-bold text-lg text-indigo-800 shadow-sm';
+  el.draggable = true;
+  el.id = p.id;
+  el.dataset.sum = p.sum;
+  el.textContent = `${p.a} + ${p.b}`;
+  el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', p.id); });
+
+  // Touch drag support
+  let touchClone = null;
+  el.addEventListener('touchstart', e => {
+    const touch = e.touches[0];
+    touchClone = el.cloneNode(true);
+    touchClone.style.position = 'fixed';
+    touchClone.style.zIndex = '999';
+    touchClone.style.pointerEvents = 'none';
+    touchClone.style.opacity = '0.85';
+    touchClone.style.left = (touch.clientX - 40) + 'px';
+    touchClone.style.top = (touch.clientY - 20) + 'px';
+    document.body.appendChild(touchClone);
+    el.dataset.dragging = 'true';
+    el.style.opacity = '0.4';
+  });
+  el.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (touchClone) {
+      touchClone.style.left = (touch.clientX - 40) + 'px';
+      touchClone.style.top = (touch.clientY - 20) + 'px';
+    }
+    document.querySelectorAll('.drop-zone').forEach(z => {
+      const r = z.getBoundingClientRect();
+      if (touch.clientX >= r.left && touch.clientX <= r.right && touch.clientY >= r.top && touch.clientY <= r.bottom) {
+        z.classList.add('drag-over');
+      } else {
+        z.classList.remove('drag-over');
+      }
+    });
+  }, { passive: false });
+  el.addEventListener('touchend', e => {
+    if (touchClone) { touchClone.remove(); touchClone = null; }
+    el.style.opacity = '1';
+    const touch = e.changedTouches[0];
+    document.querySelectorAll('.drop-zone').forEach(z => {
+      z.classList.remove('drag-over');
+      const r = z.getBoundingClientRect();
+      if (touch.clientX >= r.left && touch.clientX <= r.right && touch.clientY >= r.top && touch.clientY <= r.bottom) {
+        const catId = z.dataset.cat;
+        placeItem(p.id, catId);
+      }
+    });
+  });
+
+  return el;
+}
+
+function handleDrop(e, catId) {
+  const itemId = e.dataTransfer.getData('text/plain');
+  if (itemId) placeItem(itemId, catId);
+}
+
+function placeItem(itemId, catId) {
+  // Remove from previous category if exists
+  placements[itemId] = catId;
+  rebuildUI();
+  updateCheckBtn();
+}
+
+function rebuildUI() {
+  // Rebuild pool and categories without full DOM remount flicker
+  const pool = document.getElementById('itemsPool');
+  pool.innerHTML = '';
+  problems.forEach(p => {
+    if (!placements[p.id]) pool.appendChild(createItemEl(p));
+  });
+
+  categories.forEach(cat => {
+    const zone = document.querySelector(`.drop-zone[data-cat="${cat.id}"]`);
+    const card = document.getElementById(cat.id);
+    zone.innerHTML = '';
+    const itemsInCat = problems.filter(p => placements[p.id] === cat.id);
+    itemsInCat.forEach(p => {
+      const el = createItemEl(p);
+      zone.appendChild(el);
+    });
+    card.classList.toggle('has-items', itemsInCat.length > 0);
+  });
+}
+
+function updateCheckBtn() {
+  const allPlaced = problems.every(p => placements[p.id]);
+  const btn = document.getElementById('checkBtn');
+  btn.disabled = !allPlaced;
+  btn.classList.toggle('opacity-50', !allPlaced);
+  btn.classList.toggle('cursor-not-allowed', !allPlaced);
+  btn.classList.toggle('hover:bg-emerald-600', allPlaced);
+}
+
+async function checkAnswers() {
+  let correct = 0;
+  problems.forEach(p => {
+    const catId = placements[p.id];
+    const cat = categories.find(c => c.id === catId);
+    const el = document.getElementById(p.id);
+    if (!el || !cat) return;
+    const isCorrect = p.sum >= cat.min && p.sum <= cat.max;
+    if (isCorrect) {
+      correct++;
+      el.classList.add('correct-item');
+      el.classList.remove('incorrect-item');
+    } else {
+      el.classList.add('incorrect-item');
+      el.classList.remove('correct-item');
+    }
+    el.draggable = false;
+    el.style.cursor = 'default';
+  });
+
+  const total = problems.length;
+  const pct = Math.round((correct / total) * 100);
+  showToast(correct === total ? `🎉 Perfect! ${correct}/${total}!` : `${correct}/${total} correct (${pct}%)`, correct === total ? '#22c55e' : '#f59e0b');
+
+  document.getElementById('checkBtn').classList.add('hidden');
+  if (correct < total) document.getElementById('tryAgainBtn').classList.remove('hidden');
+  document.getElementById('resetBtn').classList.remove('hidden');
+
+  // Save to sheet
+  if (allRecords.length >= 999) {
+    showToast('⚠️ Storage limit reached', '#ef4444');
+    return;
+  }
+  if (window.dataSdk) {
+    const result = await window.dataSdk.create({
+      student_name: studentName,
+      score: correct,
+      total: total,
+      attempt: currentAttempt,
+      timestamp: new Date().toISOString()
+    });
+    if (result.isError) console.error('Save failed');
+  }
+}
+
+function tryAgain() {
+  // Only return incorrect items to pool
+  const newPlacements = {};
+  problems.forEach(p => {
+    const catId = placements[p.id];
+    const cat = categories.find(c => c.id === catId);
+    if (cat && p.sum >= cat.min && p.sum <= cat.max) {
+      newPlacements[p.id] = catId;
+    }
+  });
+  placements = newPlacements;
+  document.getElementById('checkBtn').classList.remove('hidden');
+  document.getElementById('tryAgainBtn').classList.add('hidden');
+  document.getElementById('resetBtn').classList.add('hidden');
+  rebuildUI();
+  updateCheckBtn();
+  // Keep correct items styled
+  problems.forEach(p => {
+    if (placements[p.id]) {
+      const el = document.getElementById(p.id);
+      if (el) { el.classList.add('correct-item'); el.draggable = false; el.style.cursor = 'default'; }
+    }
+  });
+}
+
+function resetActivity() {
+  document.getElementById('checkBtn').classList.remove('hidden');
+  initRound();
+}
+
+function showToast(msg, bg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = bg;
+  t.classList.remove('hidden');
+  setTimeout(() => t.classList.add('hidden'), 3000);
+}
+
+applyConfig(defaultConfig);
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f9f82dfe229e89d',t:'MTc3ODQ4NDk3MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

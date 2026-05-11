@@ -1,6 +1,7 @@
+export const dynamic = "force-dynamic"
 import { notFound } from "next/navigation"
 import prisma from "@/lib/prisma"
-import { Book, ChevronRight, GraduationCap } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import Link from "next/link"
 
 export default async function GradePage({
@@ -44,25 +45,46 @@ export default async function GradePage({
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2">
-            {grade.chapters.map((chapter) => (
-              <Link
-                key={chapter.id}
-                href={`/grade/${grade.grade}/c/${chapter.chapterNo}`}
-                className="glass-card group flex items-center justify-between p-5 transition-all hover:bg-indigo-50/50 md:p-6"
-              >
-                <div className="flex items-center gap-5">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50 font-bold text-indigo-600 transition-all group-hover:bg-indigo-600 group-hover:text-white">
-                    {chapter.chapterNo}
+            {grade.chapters.map((chapter) => {
+              const getTag = (title: string) => {
+                const lowerTitle = title.toLowerCase()
+                if (lowerTitle.includes("video"))
+                  return { label: "Video", className: "bg-blue-50 text-blue-600 border-blue-100" }
+                if (lowerTitle.includes("steam"))
+                  return { label: "Lab", className: "bg-emerald-50 text-emerald-600 border-emerald-100" }
+                if (lowerTitle.includes("interactive"))
+                  return { label: "Interactive Class", className: "bg-amber-50 text-amber-600 border-amber-100" }
+                if (lowerTitle.includes("quiz"))
+                  return { label: "Quiz", className: "bg-purple-50 text-purple-600 border-purple-100" }
+                return null
+              }
+              const tag = getTag(chapter.title)
+
+              return (
+                <Link
+                  key={chapter.id}
+                  href={`/grade/${grade.grade}/c/${chapter.chapterNo}`}
+                  className="glass-card group flex items-center justify-between p-5 transition-all hover:bg-indigo-50/50 md:p-6"
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50 font-bold text-indigo-600 transition-all group-hover:bg-indigo-600 group-hover:text-white">
+                      {chapter.chapterNo}
+                    </div>
+                    <div className="space-y-1.5">
+                      <h3 className="line-clamp-2 text-lg font-bold transition-colors group-hover:text-indigo-600 md:text-xl">
+                        {chapter.title}
+                      </h3>
+                      {tag && (
+                        <span className={`inline-flex items-center rounded-lg border px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${tag.className}`}>
+                          {tag.label}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <h3 className="line-clamp-1 text-lg font-bold transition-colors group-hover:text-indigo-600 md:text-xl">
-                      {chapter.title}
-                    </h3>
-                  </div>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground transition-all group-hover:translate-x-2 group-hover:text-indigo-600 md:h-6 md:w-6" />
-              </Link>
-            ))}
+                  <ChevronRight className="h-5 w-5 text-muted-foreground transition-all group-hover:translate-x-2 group-hover:text-indigo-600 md:h-6 md:w-6" />
+                </Link>
+              )
+            })}
           </div>
         </div>
       </div>

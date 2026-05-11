@@ -1,0 +1,333 @@
+<!doctype html>
+<html class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Addition Ordering Activity</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Nunito', sans-serif; }
+    .drag-over { transform: scale(1.05); border-color: #6366f1 !important; }
+    .correct { background: #d1fae5 !important; border-color: #10b981 !important; }
+    .incorrect { background: #fee2e2 !important; border-color: #ef4444 !important; }
+    .card-item { cursor: grab; user-select: none; transition: all 0.2s; }
+    .card-item:active { cursor: grabbing; }
+    .drop-zone { width: 8px; min-height: 60px; transition: all 0.2s; border-radius: 4px; }
+    .drop-zone.active { background: #a5b4fc; width: 16px; }
+    @media (max-width: 768px) {
+      .drop-zone { width: 100%; min-height: 8px; height: 8px; }
+      .drop-zone.active { height: 16px; min-height: 16px; }
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center p-4"><!-- Name Screen -->
+   <div id="name-screen" class="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center">
+    <div class="text-5xl mb-4">
+     🧮
+    </div>
+    <h1 id="main-title" class="text-2xl font-bold text-indigo-700 mb-2">Order the Sums</h1>
+    <p class="text-gray-600 mb-6">Arrange from smallest to largest!</p>
+    <form id="name-form" class="space-y-4"><label for="name-input" class="block text-left text-sm font-semibold text-gray-700">What's your name?</label> <input id="name-input" type="text" placeholder="Enter your name" class="w-full border-2 border-indigo-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-indigo-500" required> <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl text-lg transition">Let's Go!</button>
+    </form>
+   </div><!-- Activity Screen -->
+   <div id="activity-screen" class="hidden w-full max-w-4xl">
+    <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+     <div class="flex justify-between items-center mb-2">
+      <h2 id="activity-title" class="text-xl font-bold text-indigo-700">Order the Sums</h2><span id="player-name" class="text-sm font-semibold text-purple-600 bg-purple-100 px-3 py-1 rounded-full"></span>
+     </div>
+     <p class="text-gray-500 text-sm mb-4">Drag to arrange from <strong>smallest</strong> to <strong>largest</strong></p>
+     <div id="cards-container" class="flex flex-row md:flex-row flex-col items-center justify-center gap-0 my-6 flex-wrap md:flex-nowrap"></div>
+     <div id="feedback" class="text-center text-lg font-bold mb-4 h-8"></div>
+     <div class="flex justify-center gap-4"><button id="check-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-6 rounded-xl transition flex items-center gap-2"> <i data-lucide="check-circle" style="width:20px;height:20px;"></i> Check </button> <button id="reset-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-6 rounded-xl transition flex items-center gap-2"> <i data-lucide="shuffle" style="width:20px;height:20px;"></i> Reset </button>
+     </div>
+     <div id="score-display" class="text-center mt-4 text-sm text-gray-500"></div>
+    </div>
+   </div>
+  </div>
+  <script>
+  const defaultConfig = {
+    activity_title: "Order the Sums",
+    primary_color: "#4f46e5",
+    surface_color: "#ffffff",
+    text_color: "#1e1b4b",
+    action_color: "#10b981",
+    secondary_action_color: "#f59e0b"
+  };
+
+  let studentName = "";
+  let attemptNumber = 0;
+  let problems = [];
+  let correctOrder = [];
+  let draggedEl = null;
+  let allRecords = [];
+
+  // Generate addition problems (no regrouping, sum <= 20)
+  function generateProblems() {
+    const count = 5;
+    const used = new Set();
+    const items = [];
+    while (items.length < count) {
+      // No regrouping: units of a + units of b < 10, tens of a + tens of b <= 1
+      let a, b, sum;
+      do {
+        a = Math.floor(Math.random() * 15) + 1;
+        b = Math.floor(Math.random() * 15) + 1;
+        sum = a + b;
+      } while (sum > 20 || sum < 2 || used.has(sum) || (a % 10) + (b % 10) >= 10);
+      used.add(sum);
+      items.push({ expression: `${a} + ${b}`, value: sum });
+    }
+    items.sort((x, y) => x.value - y.value);
+    correctOrder = items.map(i => i.expression);
+    return items;
+  }
+
+  function shuffle(arr) {
+    let a = [...arr];
+    do {
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+    } while (a.every((v, i) => v.expression === correctOrder[i]));
+    return a;
+  }
+
+  function renderCards() {
+    const container = document.getElementById("cards-container");
+    container.innerHTML = "";
+    document.getElementById("feedback").textContent = "";
+    // Remove result classes
+    problems.forEach((p, i) => {
+      if (i > 0) {
+        const dz = document.createElement("div");
+        dz.className = "drop-zone";
+        dz.dataset.index = i;
+        dz.addEventListener("dragover", onDragOver);
+        dz.addEventListener("dragleave", onDragLeave);
+        dz.addEventListener("drop", onDrop);
+        container.appendChild(dz);
+      }
+      const card = document.createElement("div");
+      card.className = "card-item bg-white border-2 border-indigo-200 rounded-xl px-5 py-4 text-center font-bold text-xl text-indigo-800 shadow-sm hover:shadow-md";
+      card.draggable = true;
+      card.textContent = p.expression;
+      card.dataset.idx = i;
+      card.addEventListener("dragstart", onDragStart);
+      card.addEventListener("dragend", onDragEnd);
+      // Touch support
+      card.addEventListener("touchstart", onTouchStart, {passive: false});
+      card.addEventListener("touchmove", onTouchMove, {passive: false});
+      card.addEventListener("touchend", onTouchEnd);
+      container.appendChild(card);
+    });
+    // Add final drop zone
+    const dzEnd = document.createElement("div");
+    dzEnd.className = "drop-zone";
+    dzEnd.dataset.index = problems.length;
+    dzEnd.addEventListener("dragover", onDragOver);
+    dzEnd.addEventListener("dragleave", onDragLeave);
+    dzEnd.addEventListener("drop", onDrop);
+    container.appendChild(dzEnd);
+    // First drop zone
+    const dzStart = document.createElement("div");
+    dzStart.className = "drop-zone";
+    dzStart.dataset.index = "0";
+    dzStart.addEventListener("dragover", onDragOver);
+    dzStart.addEventListener("dragleave", onDragLeave);
+    dzStart.addEventListener("drop", onDrop);
+    container.insertBefore(dzStart, container.firstChild);
+  }
+
+  function onDragStart(e) {
+    draggedEl = e.target;
+    e.target.style.opacity = "0.5";
+    e.dataTransfer.effectAllowed = "move";
+  }
+  function onDragEnd(e) {
+    e.target.style.opacity = "1";
+    document.querySelectorAll(".drop-zone").forEach(d => d.classList.remove("active"));
+  }
+  function onDragOver(e) {
+    e.preventDefault();
+    e.currentTarget.classList.add("active");
+  }
+  function onDragLeave(e) {
+    e.currentTarget.classList.remove("active");
+  }
+  function onDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove("active");
+    if (!draggedEl) return;
+    const fromIdx = parseInt(draggedEl.dataset.idx);
+    let toIdx = parseInt(e.currentTarget.dataset.index);
+    if (toIdx > fromIdx) toIdx--;
+    if (fromIdx === toIdx) return;
+    const item = problems.splice(fromIdx, 1)[0];
+    problems.splice(toIdx, 0, item);
+    renderCards();
+  }
+
+  // Touch drag support
+  let touchClone = null;
+  let touchStartIdx = null;
+  function onTouchStart(e) {
+    e.preventDefault();
+    const t = e.touches[0];
+    touchStartIdx = parseInt(e.currentTarget.dataset.idx);
+    touchClone = e.currentTarget.cloneNode(true);
+    touchClone.style.position = "fixed";
+    touchClone.style.zIndex = 9999;
+    touchClone.style.opacity = "0.8";
+    touchClone.style.pointerEvents = "none";
+    touchClone.style.width = e.currentTarget.offsetWidth + "px";
+    document.body.appendChild(touchClone);
+    moveTouchClone(t);
+    e.currentTarget.style.opacity = "0.3";
+  }
+  function moveTouchClone(t) {
+    if (touchClone) {
+      touchClone.style.left = (t.clientX - 40) + "px";
+      touchClone.style.top = (t.clientY - 30) + "px";
+    }
+  }
+  function onTouchMove(e) {
+    e.preventDefault();
+    moveTouchClone(e.touches[0]);
+  }
+  function onTouchEnd(e) {
+    if (touchClone) { touchClone.remove(); touchClone = null; }
+    const cards = document.querySelectorAll(".card-item");
+    cards.forEach(c => c.style.opacity = "1");
+    const t = e.changedTouches[0];
+    let dropIdx = problems.length;
+    cards.forEach((c, i) => {
+      const r = c.getBoundingClientRect();
+      const isVertical = window.innerWidth < 768;
+      if (isVertical) {
+        if (t.clientY < r.top + r.height / 2 && i < dropIdx) dropIdx = i;
+      } else {
+        if (t.clientX < r.left + r.width / 2 && i < dropIdx) dropIdx = i;
+      }
+    });
+    if (touchStartIdx !== null && dropIdx !== touchStartIdx) {
+      const item = problems.splice(touchStartIdx, 1)[0];
+      if (dropIdx > touchStartIdx) dropIdx--;
+      problems.splice(dropIdx, 0, item);
+    }
+    touchStartIdx = null;
+    renderCards();
+  }
+
+  function checkOrder() {
+    const cards = document.querySelectorAll(".card-item");
+    let score = 0;
+    cards.forEach((c, i) => {
+      c.classList.remove("correct", "incorrect");
+      if (problems[i].expression === correctOrder[i]) {
+        c.classList.add("correct");
+        score++;
+      } else {
+        c.classList.add("incorrect");
+      }
+    });
+    const total = problems.length;
+    const fb = document.getElementById("feedback");
+    if (score === total) {
+      fb.textContent = "🎉 Perfect! All correct!";
+      fb.className = "text-center text-lg font-bold mb-4 h-8 text-emerald-600";
+    } else {
+      fb.textContent = `${score}/${total} correct. Try again!`;
+      fb.className = "text-center text-lg font-bold mb-4 h-8 text-amber-600";
+    }
+    attemptNumber++;
+    saveAttempt(score);
+    document.getElementById("score-display").textContent = `Attempt #${attemptNumber}`;
+  }
+
+  async function saveAttempt(score) {
+    if (allRecords.length >= 999) return;
+    if (window.dataSdk) {
+      await window.dataSdk.create({
+        student_name: studentName,
+        score: score,
+        attempt_number: attemptNumber,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
+  function resetActivity() {
+    problems = shuffle(generateProblems());
+    renderCards();
+  }
+
+  // Init
+  document.getElementById("name-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    studentName = document.getElementById("name-input").value.trim();
+    if (!studentName) return;
+    document.getElementById("name-screen").classList.add("hidden");
+    document.getElementById("activity-screen").classList.remove("hidden");
+    document.getElementById("player-name").textContent = studentName;
+    problems = shuffle(generateProblems());
+    renderCards();
+  });
+
+  document.getElementById("check-btn").addEventListener("click", checkOrder);
+  document.getElementById("reset-btn").addEventListener("click", resetActivity);
+
+  // Data SDK
+  const dataHandler = {
+    onDataChanged(data) {
+      allRecords = data;
+      const myRecords = data.filter(r => r.student_name === studentName);
+      if (myRecords.length > 0) {
+        attemptNumber = Math.max(...myRecords.map(r => r.attempt_number));
+        document.getElementById("score-display").textContent = `Attempt #${attemptNumber}`;
+      }
+    }
+  };
+  if (window.dataSdk) {
+    window.dataSdk.init(dataHandler);
+  }
+
+  // Element SDK
+  if (window.elementSdk) {
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange: async (config) => {
+        const title = config.activity_title || defaultConfig.activity_title;
+        const el1 = document.getElementById("main-title");
+        const el2 = document.getElementById("activity-title");
+        if (el1) el1.textContent = title;
+        if (el2) el2.textContent = title;
+      },
+      mapToCapabilities: (config) => {
+        const c = config || {};
+        return {
+          recolorables: [],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        };
+      },
+      mapToEditPanelValues: (config) => {
+        const c = config || {};
+        return new Map([
+          ["activity_title", c.activity_title || defaultConfig.activity_title]
+        ]);
+      }
+    });
+  }
+
+  lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f9f86c3a0bce89d',t:'MTc3ODQ4NTEzMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

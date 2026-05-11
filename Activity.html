@@ -1,0 +1,344 @@
+<!doctype html>
+<html class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Nunito', sans-serif; }
+    .item-box { transition: none; }
+    .item-box.selected { outline: 3px solid #3b82f6; }
+    .item-box.correct { outline: 3px solid #22c55e; }
+    .item-box.incorrect { outline: 3px solid #ef4444; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto bg-gradient-to-br from-sky-100 to-indigo-100 p-4"><!-- Name Entry Screen -->
+   <div id="name-screen" class="flex items-center justify-center h-full">
+    <div class="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
+     <h1 id="title-name-screen" class="text-2xl font-800 text-indigo-700 mb-4">Addition Matching Pairs</h1>
+     <p class="text-gray-600 mb-4">Enter your name to begin!</p>
+     <form id="name-form" class="space-y-4"><input type="text" id="name-input" placeholder="Your name" class="w-full border-2 border-indigo-200 rounded-lg px-4 py-3 text-lg focus:outline-none focus:border-indigo-500" required> <button type="submit" class="w-full bg-indigo-600 text-white font-700 py-3 rounded-lg hover:bg-indigo-700">Start Activity</button>
+     </form>
+    </div>
+   </div><!-- Game Screen -->
+   <div id="game-screen" class="hidden h-full flex flex-col">
+    <div class="text-center mb-4">
+     <h1 id="game-title" class="text-2xl font-800 text-indigo-700">Addition Matching Pairs</h1>
+     <p id="game-instruction" class="text-gray-600 mt-1">Match each addition equation to its answer</p>
+     <p id="player-name-display" class="text-sm text-indigo-500 font-600 mt-1"></p>
+    </div>
+    <div id="game-area" class="relative flex-1 flex items-start justify-center">
+     <svg id="lines-svg" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index:1;"></svg>
+     <div id="columns" class="flex w-full max-w-2xl gap-4 relative" style="z-index:2;">
+      <div id="left-col" class="flex-1 flex flex-col gap-3"></div>
+      <div id="right-col" class="flex-1 flex flex-col gap-3"></div>
+     </div>
+    </div>
+    <div class="flex justify-center gap-3 mt-4 pb-2 flex-wrap"><button id="check-btn" class="bg-green-600 text-white font-700 px-6 py-2 rounded-lg hover:bg-green-700">Check Answers</button> <button id="restart-btn" class="bg-gray-500 text-white font-700 px-6 py-2 rounded-lg hover:bg-gray-600">Restart</button>
+    </div>
+    <div id="result-msg" class="text-center mt-2 font-700 text-lg hidden"></div>
+   </div>
+  </div>
+  <script>
+const defaultConfig = {
+  activity_title: "Addition Matching Pairs",
+  instruction_text: "Match each addition equation to its answer",
+  pair_1_left: "10 + 5", pair_1_right: "15",
+  pair_2_left: "11 + 8", pair_2_right: "19",
+  pair_3_left: "12 + 4", pair_3_right: "16",
+  pair_4_left: "10 + 7", pair_4_right: "17",
+  pair_5_left: "13 + 5", pair_5_right: "18",
+  pair_6_left: "11 + 3", pair_6_right: "14",
+  background_color: "#e0f2fe",
+  surface_color: "#ffffff",
+  text_color: "#312e81",
+  primary_action_color: "#4f46e5",
+  secondary_action_color: "#6b7280"
+};
+
+let config = { ...defaultConfig };
+let studentName = "";
+let selectedLeft = null;
+let selectedRight = null;
+let matches = []; // [{leftId, rightId}]
+let checked = false;
+let correctPairs = [];
+let incorrectPairs = [];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getPairs() {
+  return [
+    { left: config.pair_1_left, right: config.pair_1_right, id: "1" },
+    { left: config.pair_2_left, right: config.pair_2_right, id: "2" },
+    { left: config.pair_3_left, right: config.pair_3_right, id: "3" },
+    { left: config.pair_4_left, right: config.pair_4_right, id: "4" },
+    { left: config.pair_5_left, right: config.pair_5_right, id: "5" },
+    { left: config.pair_6_left, right: config.pair_6_right, id: "6" },
+  ];
+}
+
+let leftOrder = [];
+let rightOrder = [];
+
+function buildGame() {
+  const pairs = getPairs();
+  leftOrder = shuffle(pairs.map(p => ({ text: p.left, id: p.id })));
+  rightOrder = shuffle(pairs.map(p => ({ text: p.right, id: p.id })));
+
+  const leftCol = document.getElementById("left-col");
+  const rightCol = document.getElementById("right-col");
+  leftCol.innerHTML = "";
+  rightCol.innerHTML = "";
+
+  leftOrder.forEach(item => {
+    leftCol.appendChild(createBox(item, "left"));
+  });
+  rightOrder.forEach(item => {
+    rightCol.appendChild(createBox(item, "right"));
+  });
+
+  selectedLeft = null;
+  selectedRight = null;
+  matches = [];
+  checked = false;
+  correctPairs = [];
+  incorrectPairs = [];
+  document.getElementById("result-msg").classList.add("hidden");
+  drawLines();
+}
+
+function createBox(item, side) {
+  const div = document.createElement("div");
+  div.className = "item-box bg-white border-2 border-indigo-200 rounded-xl px-4 py-4 text-center font-700 text-lg cursor-pointer select-none";
+  div.style.color = config.text_color || defaultConfig.text_color;
+  div.dataset.id = item.id;
+  div.dataset.side = side;
+  div.textContent = item.text;
+  div.addEventListener("click", () => handleSelect(div, side, item.id));
+  return div;
+}
+
+function handleSelect(div, side, id) {
+  if (checked) return;
+  // If already matched, ignore
+  if (matches.find(m => (side === "left" && m.leftId === id) || (side === "right" && m.rightId === id))) return;
+
+  if (side === "left") {
+    if (selectedLeft === id) { selectedLeft = null; } else { selectedLeft = id; }
+  } else {
+    if (selectedRight === id) { selectedRight = null; } else { selectedRight = id; }
+  }
+
+  // If both selected, create a match
+  if (selectedLeft !== null && selectedRight !== null) {
+    matches.push({ leftId: selectedLeft, rightId: selectedRight });
+    selectedLeft = null;
+    selectedRight = null;
+  }
+
+  updateUI();
+}
+
+function updateUI() {
+  document.querySelectorAll(".item-box").forEach(box => {
+    const id = box.dataset.id;
+    const side = box.dataset.side;
+    box.classList.remove("selected", "correct", "incorrect");
+
+    if (checked) {
+      const match = matches.find(m => (side === "left" ? m.leftId : m.rightId) === id);
+      if (match) {
+        if (correctPairs.includes(match)) box.classList.add("correct");
+        else if (incorrectPairs.includes(match)) box.classList.add("incorrect");
+      }
+    } else {
+      if ((side === "left" && selectedLeft === id) || (side === "right" && selectedRight === id)) {
+        box.classList.add("selected");
+      }
+      // matched but not checked yet - show selected outline
+      const inMatch = matches.find(m => (side === "left" ? m.leftId : m.rightId) === id);
+      if (inMatch) box.classList.add("selected");
+    }
+  });
+  drawLines();
+}
+
+function drawLines() {
+  const svg = document.getElementById("lines-svg");
+  const gameArea = document.getElementById("game-area");
+  const rect = gameArea.getBoundingClientRect();
+  svg.innerHTML = "";
+
+  const allPairsToShow = checked ? matches : matches;
+
+  allPairsToShow.forEach(match => {
+    const leftEl = document.querySelector(`.item-box[data-side="left"][data-id="${match.leftId}"]`);
+    const rightEl = document.querySelector(`.item-box[data-side="right"][data-id="${match.rightId}"]`);
+    if (!leftEl || !rightEl) return;
+
+    const lr = leftEl.getBoundingClientRect();
+    const rr = rightEl.getBoundingClientRect();
+
+    const x1 = lr.right - rect.left;
+    const y1 = lr.top + lr.height / 2 - rect.top;
+    const x2 = rr.left - rect.left;
+    const y2 = rr.top + rr.height / 2 - rect.top;
+
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x1);
+    line.setAttribute("y1", y1);
+    line.setAttribute("x2", x2);
+    line.setAttribute("y2", y2);
+    line.setAttribute("stroke-width", "3");
+
+    if (checked) {
+      if (correctPairs.includes(match)) {
+        line.setAttribute("stroke", "#22c55e");
+      } else {
+        line.setAttribute("stroke", "#ef4444");
+      }
+    } else {
+      line.setAttribute("stroke", "#3b82f6");
+      line.setAttribute("stroke-dasharray", "6 4");
+    }
+    svg.appendChild(line);
+  });
+
+  // Active selection line
+  if (!checked && selectedLeft && !selectedRight) {
+    const leftEl = document.querySelector(`.item-box[data-side="left"][data-id="${selectedLeft}"]`);
+    if (leftEl) {
+      // just highlight, no dangling line needed
+    }
+  }
+}
+
+document.getElementById("check-btn").addEventListener("click", async () => {
+  if (checked) return;
+  checked = true;
+  correctPairs = [];
+  incorrectPairs = [];
+
+  matches.forEach(m => {
+    if (m.leftId === m.rightId) correctPairs.push(m);
+    else incorrectPairs.push(m);
+  });
+
+  const score = correctPairs.length;
+  const total = getPairs().length;
+  const msg = document.getElementById("result-msg");
+  msg.classList.remove("hidden");
+  msg.textContent = `Score: ${score} / ${total}` + (score === total ? " 🎉 Well done!" : " - Keep practising!");
+  msg.style.color = score === total ? "#22c55e" : "#f59e0b";
+
+  updateUI();
+
+  // Save score
+  if (window.dataSdk && studentName) {
+    const result = await window.dataSdk.create({
+      student_name: studentName,
+      score: score,
+      total: total,
+      completed_at: new Date().toISOString()
+    });
+  }
+});
+
+document.getElementById("restart-btn").addEventListener("click", () => {
+  buildGame();
+});
+
+document.getElementById("name-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  studentName = document.getElementById("name-input").value.trim();
+  if (!studentName) return;
+  document.getElementById("name-screen").classList.add("hidden");
+  document.getElementById("game-screen").classList.remove("hidden");
+  document.getElementById("player-name-display").textContent = `Player: ${studentName}`;
+  buildGame();
+});
+
+window.addEventListener("resize", drawLines);
+
+// Element SDK
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (cfg) => {
+      config = { ...defaultConfig, ...cfg };
+      document.getElementById("title-name-screen").textContent = config.activity_title;
+      document.getElementById("game-title").textContent = config.activity_title;
+      document.getElementById("game-instruction").textContent = config.instruction_text;
+      document.body.querySelector("#app").style.background = `linear-gradient(135deg, ${config.background_color}, #e0e7ff)`;
+      document.querySelectorAll(".item-box").forEach(b => {
+        b.style.backgroundColor = config.surface_color;
+        b.style.color = config.text_color;
+      });
+      document.getElementById("check-btn").style.backgroundColor = config.primary_action_color;
+      document.getElementById("restart-btn").style.backgroundColor = config.secondary_action_color;
+      // Rebuild if game is active and pairs changed
+      if (!document.getElementById("game-screen").classList.contains("hidden") && !checked) {
+        buildGame();
+      }
+    },
+    mapToCapabilities: (cfg) => {
+      const c = cfg || {};
+      return {
+        recolorables: [
+          { get: () => c.background_color || defaultConfig.background_color, set: (v) => { c.background_color = v; window.elementSdk?.setConfig({ background_color: v }); } },
+          { get: () => c.surface_color || defaultConfig.surface_color, set: (v) => { c.surface_color = v; window.elementSdk?.setConfig({ surface_color: v }); } },
+          { get: () => c.text_color || defaultConfig.text_color, set: (v) => { c.text_color = v; window.elementSdk?.setConfig({ text_color: v }); } },
+          { get: () => c.primary_action_color || defaultConfig.primary_action_color, set: (v) => { c.primary_action_color = v; window.elementSdk?.setConfig({ primary_action_color: v }); } },
+          { get: () => c.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { c.secondary_action_color = v; window.elementSdk?.setConfig({ secondary_action_color: v }); } },
+        ],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    },
+    mapToEditPanelValues: (cfg) => {
+      const c = cfg || {};
+      return new Map([
+        ["activity_title", c.activity_title || defaultConfig.activity_title],
+        ["instruction_text", c.instruction_text || defaultConfig.instruction_text],
+        ["pair_1_left", c.pair_1_left || defaultConfig.pair_1_left],
+        ["pair_1_right", c.pair_1_right || defaultConfig.pair_1_right],
+        ["pair_2_left", c.pair_2_left || defaultConfig.pair_2_left],
+        ["pair_2_right", c.pair_2_right || defaultConfig.pair_2_right],
+        ["pair_3_left", c.pair_3_left || defaultConfig.pair_3_left],
+        ["pair_3_right", c.pair_3_right || defaultConfig.pair_3_right],
+        ["pair_4_left", c.pair_4_left || defaultConfig.pair_4_left],
+        ["pair_4_right", c.pair_4_right || defaultConfig.pair_4_right],
+        ["pair_5_left", c.pair_5_left || defaultConfig.pair_5_left],
+        ["pair_5_right", c.pair_5_right || defaultConfig.pair_5_right],
+        ["pair_6_left", c.pair_6_left || defaultConfig.pair_6_left],
+        ["pair_6_right", c.pair_6_right || defaultConfig.pair_6_right],
+      ]);
+    }
+  });
+}
+
+// Data SDK
+const dataHandler = { onDataChanged(data) {} };
+if (window.dataSdk) {
+  window.dataSdk.init(dataHandler);
+}
+
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f9f7b921183e89d',t:'MTc3ODQ4NDY3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

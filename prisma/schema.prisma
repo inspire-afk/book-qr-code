@@ -45,6 +45,9 @@ model ChapterModule {
   quizData         Json?
   quizTitle        String?
   quizDescription  String?
+  htmlContent      String?
+  htmlTitle        String?
+  htmlDescription  String?
   order            Int
   createdAt        DateTime @default(now())
 }

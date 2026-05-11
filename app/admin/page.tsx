@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic"
 import prisma from "@/lib/prisma"
 import Link from "next/link"
 import { Plus, Book, ChevronRight } from "lucide-react"
@@ -5,7 +6,7 @@ import { GradeForm } from "./GradeForm"
 import { GenerateQRButton } from "./GenerateQRButton"
 import { EditGradeTitleButton } from "./EditGradeTitleButton"
 import { Navbar } from "@/components/Navbar"
-// import { DeleteGradeButton } from "./DeleteGradeButton"
+import { DeleteGradeButton } from "./DeleteGradeButton"
 
 export default async function AdminPage() {
   const grades = await prisma.grade.findMany({
@@ -73,6 +74,10 @@ export default async function AdminPage() {
                     path={`/grade/${grade.grade}`}
                     fileName={`Grade-${grade.grade}-Full-Book`}
                   />
+                  {/* <DeleteGradeButton
+                    gradeId={grade.id}
+                    gradeName={`Grade ${grade.grade}`}
+                  /> */}
                  </div>
               </div>
             </div>

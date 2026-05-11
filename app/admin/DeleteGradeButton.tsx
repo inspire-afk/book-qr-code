@@ -33,7 +33,6 @@ export const DeleteGradeButton = ({ gradeId, gradeName }: DeleteGradeButtonProps
         className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-500/10 p-2.5 text-sm font-bold text-red-500 transition-all hover:bg-red-500 hover:text-white"
       >
         <Trash2 className="h-5 w-5" />
-        Delete
       </button>
 
       <DeleteConfirmationModal

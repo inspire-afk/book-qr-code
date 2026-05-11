@@ -16,6 +16,9 @@ interface Module {
   quizTitle: string
   quizDescription: string
   quizData: any
+  htmlTitle: string
+  htmlDescription: string
+  htmlContent: string
 }
 
 export const ChapterForm = ({ gradeId, chapterToEdit }: ChapterFormProps) => {
@@ -34,6 +37,9 @@ export const ChapterForm = ({ gradeId, chapterToEdit }: ChapterFormProps) => {
           quizTitle: m.quizTitle || "",
           quizDescription: m.quizDescription || "",
           quizData: m.quizData || null,
+          htmlTitle: m.htmlTitle || "",
+          htmlDescription: m.htmlDescription || "",
+          htmlContent: m.htmlContent || "",
         }))
       )
     }
@@ -50,6 +56,9 @@ export const ChapterForm = ({ gradeId, chapterToEdit }: ChapterFormProps) => {
         quizTitle: "",
         quizDescription: "",
         quizData: null,
+        htmlTitle: "",
+        htmlDescription: "",
+        htmlContent: "",
       },
     ])
   }
@@ -83,13 +92,28 @@ export const ChapterForm = ({ gradeId, chapterToEdit }: ChapterFormProps) => {
     }
   }
 
+  const handleHtmlUpload = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const content = event.target?.result as string
+        updateModule(index, "htmlContent", content)
+      }
+      reader.readAsText(file)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     // Validation
     for (let i = 0; i < modules.length; i++) {
-      if (!modules[i].videoUrl && !modules[i].quizData) {
-        alert(`Please provide either a Video URL or Quiz JSON for Module ${i + 1}`)
+      if (!modules[i].videoUrl && !modules[i].quizData && !modules[i].htmlContent) {
+        alert(`Please provide either a Video URL, Quiz JSON, or HTML file for Module ${i + 1}`)
         return
       }
     }
@@ -329,9 +353,25 @@ export const ChapterForm = ({ gradeId, chapterToEdit }: ChapterFormProps) => {
                                   </span>
                                 </div>
                                 {module.quizData && (
-                                  <span className="text-[10px] opacity-60">
-                                    {module.quizData.questions.length} Qs
-                                  </span>
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-[10px] opacity-60">
+                                      {module.quizData.questions.length} Qs
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        updateModule(index, "quizData", null);
+                                        const input = document.getElementById(`json-upload-${index}`) as HTMLInputElement;
+                                        if (input) input.value = "";
+                                      }}
+                                      className="rounded-full bg-red-100 p-1 text-red-600 hover:bg-red-200 transition-colors"
+                                      title="Remove Quiz"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </button>
+                                  </div>
                                 )}
                               </label>
                             </div>
@@ -347,6 +387,91 @@ export const ChapterForm = ({ gradeId, chapterToEdit }: ChapterFormProps) => {
                               updateModule(index, "quizDescription", e.target.value)
                             }
                             placeholder="Brief description of this quiz..."
+                            className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-black outline-none focus:border-indigo-600 min-h-[80px]"
+                          />
+                        </div>
+                      </div>
+
+                      {/* HTML Section */}
+                      <div className="space-y-4 pt-4 border-t border-border/50">
+                        <h4 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">HTML Content</h4>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                              HTML Title (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={module.htmlTitle}
+                              onChange={(e) =>
+                                updateModule(index, "htmlTitle", e.target.value)
+                              }
+                              placeholder="Title for this HTML content..."
+                              className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-black outline-none focus:border-indigo-600"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                              HTML File
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="file"
+                                accept=".html,.htm"
+                                onChange={(e) => handleHtmlUpload(index, e)}
+                                className="hidden"
+                                id={`html-upload-${index}`}
+                              />
+                              <label
+                                htmlFor={`html-upload-${index}`}
+                                className={`flex w-full cursor-pointer items-center justify-between rounded-xl border-2 border-dashed p-3 transition-all ${
+                                  module.htmlContent
+                                    ? "border-amber-200 bg-amber-50 text-amber-600"
+                                    : "border-border bg-white text-muted-foreground hover:bg-secondary"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {module.htmlContent ? (
+                                    <CheckCircle2 className="h-4 w-4" />
+                                  ) : (
+                                    <Upload className="h-4 w-4" />
+                                  )}
+                                  <span className="text-xs font-medium">
+                                    {module.htmlContent
+                                      ? "HTML Uploaded"
+                                      : "Upload HTML"}
+                                  </span>
+                                </div>
+                                {module.htmlContent && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      updateModule(index, "htmlContent", "");
+                                      const input = document.getElementById(`html-upload-${index}`) as HTMLInputElement;
+                                      if (input) input.value = "";
+                                    }}
+                                    className="rounded-full bg-red-100 p-1 text-red-600 hover:bg-red-200 transition-colors"
+                                    title="Remove HTML"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                )}
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                            HTML Description (Optional)
+                          </label>
+                          <textarea
+                            value={module.htmlDescription}
+                            onChange={(e) =>
+                              updateModule(index, "htmlDescription", e.target.value)
+                            }
+                            placeholder="Brief description of this HTML content..."
                             className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-black outline-none focus:border-indigo-600 min-h-[80px]"
                           />
                         </div>

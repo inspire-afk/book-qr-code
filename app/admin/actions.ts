@@ -12,7 +12,7 @@ export async function createGrade(formData: FormData) {
   });
 
   revalidatePath("/admin");
-  revalidatePath("/");
+  revalidatePath("/", "layout");
 }
 
 export async function updateGradeTitle(gradeId: string, title: string) {
@@ -22,7 +22,7 @@ export async function updateGradeTitle(gradeId: string, title: string) {
   });
 
   revalidatePath("/admin");
-  revalidatePath("/");
+  revalidatePath("/", "layout");
 }
 
 export async function createChapter(
@@ -53,6 +53,9 @@ export async function createChapter(
           quizData: m.quizData || null,
           quizTitle: m.quizTitle || null,
           quizDescription: m.quizDescription || null,
+          htmlContent: m.htmlContent || null,
+          htmlTitle: m.htmlTitle || null,
+          htmlDescription: m.htmlDescription || null,
           order: index + 1,
         })),
       },
@@ -60,7 +63,7 @@ export async function createChapter(
   })
 
   revalidatePath(`/admin/grade/${gradeId}`)
-  revalidatePath(`/grade`)
+  revalidatePath("/grade", "layout")
 }
 
 export async function updateChapter(
@@ -96,6 +99,9 @@ export async function updateChapter(
           quizData: m.quizData || null,
           quizTitle: m.quizTitle || null,
           quizDescription: m.quizDescription || null,
+          htmlContent: m.htmlContent || null,
+          htmlTitle: m.htmlTitle || null,
+          htmlDescription: m.htmlDescription || null,
           order: index + 1,
         })),
       },
@@ -103,7 +109,7 @@ export async function updateChapter(
   })
 
   revalidatePath(`/admin/grade/${gradeId}`)
-  revalidatePath(`/grade`)
+  revalidatePath("/grade", "layout")
 }
 
 export async function deleteChapter(chapterId: string, gradeId: string) {
@@ -111,6 +117,7 @@ export async function deleteChapter(chapterId: string, gradeId: string) {
   await prisma.chapter.delete({ where: { id: chapterId } })
 
   revalidatePath(`/admin/grade/${gradeId}`)
+  revalidatePath("/grade", "layout")
 }
 
 export async function deleteGrade(gradeId: string) {
@@ -125,5 +132,5 @@ export async function deleteGrade(gradeId: string) {
   await prisma.grade.delete({ where: { id: gradeId } })
 
   revalidatePath("/admin")
-  revalidatePath("/")
+  revalidatePath("/", "layout")
 }
