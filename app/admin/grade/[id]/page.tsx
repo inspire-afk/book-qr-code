@@ -14,19 +14,39 @@ export default async function GradeDetailPage({
 }) {
   const { id } = await params
 
-  const grade = await prisma.grade.findUnique({
-    where: { id },
-    include: {
-      chapters: {
-        orderBy: { chapterNo: "asc" },
-        include: {
-          modules: {
-            orderBy: { order: "asc" },
+  const isObjectId = (value: string) => /^[0-9a-fA-F]{24}$/.test(value)
+  const isGradeNumber = (value: string) => /^\d+(?:\.\d+)?$/.test(value)
+
+  let grade
+  if (isObjectId(id)) {
+    grade = await prisma.grade.findUnique({
+      where: { id },
+      include: {
+        chapters: {
+          orderBy: { chapterNo: "asc" },
+          include: {
+            modules: {
+              orderBy: { order: "asc" },
+            },
           },
         },
       },
-    },
-  })
+    })
+  } else if (isGradeNumber(id)) {
+    grade = await prisma.grade.findFirst({
+      where: { grade: parseFloat(id) },
+      include: {
+        chapters: {
+          orderBy: { chapterNo: "asc" },
+          include: {
+            modules: {
+              orderBy: { order: "asc" },
+            },
+          },
+        },
+      },
+    })
+  }
 
   if (!grade) return notFound()
 

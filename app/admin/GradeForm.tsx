@@ -49,8 +49,10 @@ export const GradeForm = () => {
                 <input
                   name="grade"
                   type="number"
+                  step="any"
+                  inputMode="decimal"
                   required
-                  placeholder="e.g. 8"
+                  placeholder="e.g. 8 or 8.5"
                   className="w-full bg-white border border-border rounded-xl px-4 py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all shadow-sm"
                 />
               </div>

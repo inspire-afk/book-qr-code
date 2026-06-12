@@ -3,9 +3,33 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
+function getGradeValue(formData: FormData) {
+  const directValue = formData.get("grade");
+  if (typeof directValue === "string" && directValue.trim().length > 0) {
+    return directValue;
+  }
+
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === "string" && key.endsWith("_grade")) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
 export async function createGrade(formData: FormData) {
-  const grade = parseInt(formData.get("grade") as string);
-  const title = formData.get("title") as string;
+  const gradeValue = getGradeValue(formData);
+  if (!gradeValue) {
+    throw new Error("Grade value is required");
+  }
+
+  const grade = parseFloat(gradeValue);
+  if (!Number.isFinite(grade)) {
+    throw new Error("Invalid grade value");
+  }
+
+  const title = (formData.get("title") as string) || "";
 
   await prisma.grade.create({
     data: { grade, title },
